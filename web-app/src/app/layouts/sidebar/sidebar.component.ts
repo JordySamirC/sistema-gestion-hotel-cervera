@@ -10,8 +10,11 @@ import { CommonModule } from '@angular/common';
   template: `
     <aside class="sidebar">
       <div class="sidebar-header">
-        <h2>Hotel Cervera</h2>
-        <span class="subtitle">Rio Santiago</span>
+        <img src="assets/images/Logo.png" alt="Hotel Cervera" class="sidebar-logo" />
+        <div class="sidebar-brand">
+          <h2>Hotel Cervera</h2>
+          <span class="subtitle">Rio Santiago</span>
+        </div>
       </div>
       <nav class="sidebar-nav">
         <a routerLink="/dashboard" routerLinkActive="active" class="nav-item">
@@ -25,6 +28,14 @@ import { CommonModule } from '@angular/common';
         <a routerLink="/reservas" routerLinkActive="active" class="nav-item">
           <span class="icon">📋</span>
           <span>Reservas</span>
+        </a>
+        <a routerLink="/reservas/nueva" routerLinkActive="active" class="nav-item sub-item">
+          <span class="icon">➕</span>
+          <span>Nueva Reserva</span>
+        </a>
+        <a routerLink="/reservas/grupo/nuevo" routerLinkActive="active" class="nav-item sub-item">
+          <span class="icon">👥</span>
+          <span>Reserva Grupal</span>
         </a>
         <a routerLink="/check-in" routerLinkActive="active" class="nav-item">
           <span class="icon">✅</span>
@@ -54,6 +65,10 @@ import { CommonModule } from '@angular/common';
           <span class="icon">🔧</span>
           <span>Usuarios</span>
         </a>
+        <a routerLink="/precios" routerLinkActive="active" class="nav-item" *ngIf="auth.esGerente()">
+          <span class="icon">🏷️</span>
+          <span>Precios</span>
+        </a>
         <a routerLink="/reportes" routerLinkActive="active" class="nav-item" *ngIf="auth.esGerente()">
           <span class="icon">📈</span>
           <span>Reportes</span>
@@ -73,14 +88,24 @@ import { CommonModule } from '@angular/common';
     .sidebar-header {
       padding: 20px;
       border-bottom: 1px solid rgba(255,255,255,0.1);
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
-    .sidebar-header h2 {
+    .sidebar-logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      object-fit: cover;
+    }
+    .sidebar-brand h2 {
       margin: 0;
-      font-size: 1.2rem;
+      font-size: 1rem;
       font-weight: 600;
     }
-    .subtitle {
-      font-size: 0.75rem;
+    .sidebar-brand .subtitle {
+      font-size: 0.7rem;
       opacity: 0.7;
     }
     .sidebar-nav {
@@ -110,6 +135,10 @@ import { CommonModule } from '@angular/common';
       font-size: 1.1rem;
       width: 24px;
       text-align: center;
+    }
+    .sub-item {
+      padding-left: 44px;
+      font-size: 0.8rem;
     }
   `]
 })

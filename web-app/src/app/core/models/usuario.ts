@@ -1,5 +1,5 @@
 export interface LoginRequest {
-  nombreUsuario: string;
+  email: string;
   contrasena: string;
 }
 
@@ -47,4 +47,13 @@ export interface UsuarioUpdateRequest {
 export interface CambiarPasswordRequest {
   contrasenaActual: string;
   nuevaContrasena: string;
+}
+
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  token: string;
+  newPassword: string;
 }

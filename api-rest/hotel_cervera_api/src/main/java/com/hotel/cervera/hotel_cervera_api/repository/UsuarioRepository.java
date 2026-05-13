@@ -27,8 +27,8 @@ public interface UsuarioRepository extends JpaRepository<Usuario, UUID> {
     @Query("SELECT u FROM Usuario u WHERE u.deletedAt IS NULL AND u.id = :id")
     Optional<Usuario> findActiveById(@Param("id") UUID id);
 
-    @Query("SELECT u FROM Usuario u WHERE u.deletedAt IS NULL AND u.nombreUsuario = :nombreUsuario")
-    Optional<Usuario> findActiveByNombreUsuario(@Param("nombreUsuario") String nombreUsuario);
+    @Query("SELECT u FROM Usuario u WHERE u.deletedAt IS NULL AND u.email = :email")
+    Optional<Usuario> findActiveByEmail(@Param("email") String email);
 
     List<Usuario> findByRolId(UUID rolId);
 }

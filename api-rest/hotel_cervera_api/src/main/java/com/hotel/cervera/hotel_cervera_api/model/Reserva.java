@@ -6,6 +6,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +43,16 @@ public class Reserva {
     @Column(name = "motivo_cancelacion", columnDefinition = "TEXT")
     private String motivoCancelacion;
 
+    @Column(name = "observaciones_cancelacion", columnDefinition = "TEXT")
+    private String observacionesCancelacion;
+
+    @Column(name = "fecha_cancelacion")
+    private LocalDateTime fechaCancelacion;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cancelado_por")
+    private Usuario canceladoPor;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "creado_por", nullable = false)
     private Usuario creadoPor;
@@ -49,29 +60,15 @@ public class Reserva {
     @Column(name = "adultos", nullable = false)
     private Integer adultos;
 
-    @Column(name = "adolescentes", nullable = false)
-    private Integer adolescentes;
-
     @Column(name = "ninos", nullable = false)
     private Integer ninos;
 
-    @Column(name = "bebes", nullable = false)
-    private Integer bebes;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "canal_venta_id", nullable = false)
+    private CanalesVenta canalVenta;
 
-    @Column(name = "canal_venta", nullable = false, length = 30)
-    private String canalVenta;
-
-    @Column(name = "tipo_cliente", nullable = false, length = 20)
-    private String tipoCliente;
-
-    @Column(name = "cambios_reserva", nullable = false)
-    private Integer cambiosReserva;
-
-    @Column(name = "solicitudes_especiales", nullable = false)
-    private Integer solicitudesEspeciales;
-
-    @Column(name = "cancelaciones_previas", nullable = false)
-    private Integer cancelacionesPrevias;
+    @Column(name = "canal_venta_otro", length = 100)
+    private String canalVentaOtro;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
@@ -84,6 +81,10 @@ public class Reserva {
     @OneToMany(mappedBy = "reserva", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<ReservaDetalle> detalles = new ArrayList<>();
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "grupo_id")
+    private Grupo grupo;
 
     @OneToMany(mappedBy = "reserva")
     private List<Estadia> estadias;

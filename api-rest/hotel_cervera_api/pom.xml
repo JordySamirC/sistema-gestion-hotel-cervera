@@ -17,7 +17,7 @@
 		<java.version>17</java.version>
 		<jjwt.version>0.12.3</jjwt.version>
 		<springdoc.version>2.5.0</springdoc.version>
-		<spring-dotenv.version>4.0.0</spring-dotenv.version>
+		<spring-dotenv.version>5.1.0</spring-dotenv.version>
 	</properties>
     <dependencies>
         <!-- ===== SPRING BOOT STARTERS BASE ===== -->
@@ -123,9 +123,16 @@
 		<!-- ===== VARIABLES DE ENTORNO (.env) ===== -->
 		<dependency>
 			<groupId>me.paulschwarz</groupId>
-			<artifactId>spring-dotenv</artifactId>
-			<version>${spring-dotenv.version}</version>
+			<artifactId>springboot4-dotenv</artifactId>
+			<optional>true</optional>
 		</dependency>
+        
+        <!-- ===== VALIDACIÓN DE TELÉFONOS (libphonenumber) ===== -->
+        <dependency>
+            <groupId>com.googlecode.libphonenumber</groupId>
+            <artifactId>libphonenumber</artifactId>
+            <version>9.0.30</version>
+        </dependency>
     </dependencies>
 
 	<dependencyManagement>
@@ -134,6 +141,13 @@
 				<groupId>org.testcontainers</groupId>
 				<artifactId>testcontainers-bom</artifactId>
 				<version>1.19.8</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+			<dependency>
+				<groupId>me.paulschwarz</groupId>
+				<artifactId>spring-dotenv-bom</artifactId>
+				<version>${spring-dotenv.version}</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>

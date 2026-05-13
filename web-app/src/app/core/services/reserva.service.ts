@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { ReservaResponse, ReservaRequest, ReservaDetalleResponse, ReservaDetalleRequest, CancelarReservaRequest, EstadiaResponse, CheckInRequest, CheckOutRequest } from '../models/reserva';
+import { ReservaResponse, ReservaRequest, ReservaDetalleResponse, ReservaDetalleRequest, CancelarReservaRequest, EstadiaResponse, CheckInRequest, CheckOutRequest, GrupoResponse, GrupoRequest, GrupoUpdateRequest, AddHabitacionRequest, ReservaHuespedResponse, PanelReservaItem, CanalVenta } from '../models/reserva';
 import { ApiResponse } from '../models/api-response';
 import { ApiService } from './api.service';
 
@@ -49,8 +49,48 @@ export class ReservaService extends ApiService {
     return this.http.post<ReservaDetalleResponse>(`${this.baseUrl}/reservas/${reservaId}/detalles`, request);
   }
 
+  getAllGrupos(): Observable<GrupoResponse[]> {
+    return this.http.get<GrupoResponse[]>(`${this.baseUrl}/grupos`);
+  }
+
+  getGrupo(id: string): Observable<GrupoResponse> {
+    return this.http.get<GrupoResponse>(`${this.baseUrl}/grupos/${id}`);
+  }
+
+  crearGrupo(request: GrupoRequest): Observable<GrupoResponse> {
+    return this.http.post<GrupoResponse>(`${this.baseUrl}/grupos`, request);
+  }
+
+  updateGrupo(id: string, request: GrupoUpdateRequest): Observable<GrupoResponse> {
+    return this.http.put<GrupoResponse>(`${this.baseUrl}/grupos/${id}`, request);
+  }
+
+  deleteGrupo(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/grupos/${id}`);
+  }
+
+  addHabitacionToGrupo(grupoId: string, request: AddHabitacionRequest): Observable<GrupoResponse> {
+    return this.http.post<GrupoResponse>(`${this.baseUrl}/grupos/${grupoId}/habitaciones`, request);
+  }
+
+  removeHabitacionFromGrupo(grupoId: string, habitacionId: string): Observable<GrupoResponse> {
+    return this.http.delete<GrupoResponse>(`${this.baseUrl}/grupos/${grupoId}/habitaciones/${habitacionId}`);
+  }
+
+  getHuespedes(reservaId: string): Observable<ReservaHuespedResponse[]> {
+    return this.http.get<ReservaHuespedResponse[]>(`${this.baseUrl}/grupos/${reservaId}/huespedes`);
+  }
+
   removeDetalle(reservaId: string, detalleId: string): Observable<ApiResponse> {
     return this.http.delete<ApiResponse>(`${this.baseUrl}/reservas/${reservaId}/detalles/${detalleId}`);
+  }
+
+  getCanalesVenta(): Observable<CanalVenta[]> {
+    return this.http.get<CanalVenta[]>(`${this.baseUrl}/canales-venta`);
+  }
+
+  getPanel(): Observable<PanelReservaItem[]> {
+    return this.http.get<PanelReservaItem[]>(`${this.baseUrl}/reservas/panel`);
   }
 
   getEstadiasActivas(): Observable<EstadiaResponse[]> {

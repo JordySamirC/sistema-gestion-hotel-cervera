@@ -1,12 +1,12 @@
 import { Component } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   template: `
     <header class="header">
       <div class="header-left">
@@ -17,6 +17,7 @@ import { CommonModule } from '@angular/common';
           {{ usuario.nombres }} {{ usuario.apellidos }}
           <span class="badge">{{ usuario.rol }}</span>
         </span>
+        <a routerLink="/configuracion" class="btn-config" title="Configuración">⚙️</a>
         <button class="btn-logout" (click)="logout()">Cerrar Sesión</button>
       </div>
     </header>
@@ -69,6 +70,18 @@ import { CommonModule } from '@angular/common';
     .btn-logout:hover {
       background: #d32f2f;
     }
+    .btn-config {
+      text-decoration: none;
+      font-size: 1.2rem;
+      cursor: pointer;
+      line-height: 1;
+      padding: 4px;
+      border-radius: 4px;
+      transition: background 0.2s;
+    }
+    .btn-config:hover {
+      background: #f0f0f0;
+    }
   `]
 })
 export class HeaderComponent {
@@ -89,7 +102,8 @@ export class HeaderComponent {
       '/pagos': 'Historial de Pagos',
       '/gastos': 'Gestión de Gastos',
       '/usuarios': 'Gestión de Usuarios',
-      '/reportes': 'Reportes'
+      '/reportes': 'Reportes',
+      '/configuracion': 'Configuración'
     };
     return titles[url] || 'Hotel Cervera Rio Santiago';
   }

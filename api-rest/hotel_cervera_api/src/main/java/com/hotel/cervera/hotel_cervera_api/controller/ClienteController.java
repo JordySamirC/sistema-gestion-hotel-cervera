@@ -1,6 +1,7 @@
 package com.hotel.cervera.hotel_cervera_api.controller;
 
 import com.hotel.cervera.hotel_cervera_api.dto.ApiResponse;
+import com.hotel.cervera.hotel_cervera_api.dto.request.CambiarEstadoClienteRequest;
 import com.hotel.cervera.hotel_cervera_api.dto.request.ClienteRequest;
 import com.hotel.cervera.hotel_cervera_api.dto.response.ClienteResponse;
 import com.hotel.cervera.hotel_cervera_api.service.ClienteService;
@@ -10,9 +11,11 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,6 +24,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/clientes")
 @RequiredArgsConstructor
+@Validated
 @Tag(name = "Clientes", description = "Gestión de clientes del hotel")
 public class ClienteController {
 
@@ -49,10 +53,11 @@ public class ClienteController {
     @Operation(summary = "Buscar cliente por documento", description = "Busca un cliente por tipo y número de documento (DNI, pasaporte, etc.)")
     @io.swagger.v3.oas.annotations.responses.ApiResponses(value = {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Cliente encontrado"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Parámetros inválidos"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Cliente no encontrado con ese documento")
     })
     public ResponseEntity<ClienteResponse> buscarPorDocumento(
-            @RequestParam String tipoDocumento, @RequestParam String numeroDocumento) {
+            @NotBlank @RequestParam String tipoDocumento, @NotBlank @RequestParam String numeroDocumento) {
         return ResponseEntity.ok(clienteService.buscarPorDocumento(tipoDocumento, numeroDocumento));
     }
 
@@ -78,8 +83,20 @@ public class ClienteController {
         return ResponseEntity.ok(clienteService.update(id, request));
     }
 
+    @PatchMapping("/{id}/estado")
+    @Operation(summary = "Cambiar estado del cliente", description = "Cambia el estado de un cliente: ACTIVO, SUSPENDIDO o VETADO")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Estado actualizado correctamente"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Estado inválido"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Cliente no encontrado")
+    })
+    public ResponseEntity<ClienteResponse> cambiarEstado(@PathVariable UUID id,
+                                                           @Valid @RequestBody CambiarEstadoClienteRequest request) {
+        return ResponseEntity.ok(clienteService.cambiarEstado(id, request.getEstado()));
+    }
+
     @DeleteMapping("/{id}")
-    @Operation(summary = "Eliminar un cliente", description = "Elimina un cliente del sistema (solo gerente)")
+    @Operation(summary = "Eliminar un cliente", description = "Elimina permanentemente un cliente del sistema (solo gerente)")
     @io.swagger.v3.oas.annotations.responses.ApiResponses(value = {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Cliente eliminado correctamente"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Cliente no encontrado")

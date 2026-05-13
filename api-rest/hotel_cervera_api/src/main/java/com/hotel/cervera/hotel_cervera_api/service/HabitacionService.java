@@ -110,6 +110,7 @@ public class HabitacionService {
                 .piso(entity.getPiso())
                 .tipoId(entity.getTipo().getId())
                 .tipoNombre(entity.getTipo().getNombre())
+                .capacidadMax(entity.getTipo().getCapacidadMax())
                 .estadoActual(entity.getEstadoActual())
                 .notas(entity.getNotas())
                 .createdAt(entity.getCreatedAt())

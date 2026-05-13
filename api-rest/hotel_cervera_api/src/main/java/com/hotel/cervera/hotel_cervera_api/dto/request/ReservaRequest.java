@@ -30,19 +30,13 @@ public class ReservaRequest {
     private Integer adultos;
 
     @Min(value = 0)
-    private Integer adolescentes;
-
-    @Min(value = 0)
     private Integer ninos;
 
-    @Min(value = 0)
-    private Integer bebes;
+    @NotNull(message = "El canal de venta es obligatorio")
+    private Long canalVentaId;
 
-    @Size(max = 30)
-    private String canalVenta;
-
-    @Size(max = 20)
-    private String tipoCliente;
+    @Size(max = 100)
+    private String canalVentaOtro;
 
     @NotEmpty(message = "Debe seleccionar al menos una habitación")
     private List<UUID> habitacionesIds;

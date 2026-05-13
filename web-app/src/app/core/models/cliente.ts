@@ -5,9 +5,12 @@ export interface ClienteResponse {
   nombres: string;
   apellidos: string;
   nacionalidad: string;
+  genero: string;
+  estado: string;
   telefono: string;
   email: string;
   vecesHospedado: number;
+  fechaNacimiento: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -18,6 +21,8 @@ export interface ClienteRequest {
   nombres: string;
   apellidos: string;
   nacionalidad: string;
-  telefono?: string;
-  email?: string;
+  genero: string;
+  telefono: string;
+  email: string | null;
+  fechaNacimiento: string | null;
 }

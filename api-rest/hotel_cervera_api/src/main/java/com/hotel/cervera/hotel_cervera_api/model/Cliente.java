@@ -5,6 +5,7 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -19,7 +20,7 @@ public class Cliente {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "tipo_documento", nullable = false, length = 3)
+    @Column(name = "tipo_documento", nullable = false, length = 30)
     private String tipoDocumento;
 
     @Column(name = "numero_documento", nullable = false, length = 20)
@@ -34,7 +35,10 @@ public class Cliente {
     @Column(name = "nacionalidad", nullable = false, length = 50)
     private String nacionalidad;
 
-    @Column(name = "telefono", length = 20)
+    @Column(name = "genero", nullable = false, length = 20)
+    private String genero;
+
+    @Column(name = "telefono", nullable = false, length = 30)
     private String telefono;
 
     @Column(name = "email", length = 100)
@@ -42,6 +46,13 @@ public class Cliente {
 
     @Column(name = "veces_hospedado")
     private Integer vecesHospedado;
+
+    @Column(name = "fecha_nacimiento")
+    private LocalDate fechaNacimiento;
+
+    @Builder.Default
+    @Column(name = "estado", nullable = false, length = 20)
+    private String estado = "ACTIVO";
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

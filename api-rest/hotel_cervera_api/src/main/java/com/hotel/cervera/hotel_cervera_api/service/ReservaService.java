@@ -1,10 +1,15 @@
 package com.hotel.cervera.hotel_cervera_api.service;
 
+import com.hotel.cervera.hotel_cervera_api.dto.request.CancelarReservaRequest;
 import com.hotel.cervera.hotel_cervera_api.dto.request.ReservaRequest;
 import com.hotel.cervera.hotel_cervera_api.dto.response.ReservaDetalleResponse;
+import com.hotel.cervera.hotel_cervera_api.dto.response.ReservaHuespedResponse;
 import com.hotel.cervera.hotel_cervera_api.dto.response.ReservaResponse;
 import com.hotel.cervera.hotel_cervera_api.exception.BusinessException;
+import com.hotel.cervera.hotel_cervera_api.dto.response.PanelReservaItem;
 import com.hotel.cervera.hotel_cervera_api.exception.ResourceNotFoundException;
+import com.hotel.cervera.hotel_cervera_api.model.Grupo;
+import com.hotel.cervera.hotel_cervera_api.model.ReservaHuesped;
 import com.hotel.cervera.hotel_cervera_api.model.*;
 import com.hotel.cervera.hotel_cervera_api.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +18,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -28,6 +35,9 @@ public class ReservaService {
     private final UsuarioRepository usuarioRepository;
     private final HabitacionRepository habitacionRepository;
     private final PrecioHistoricoRepository precioHistoricoRepository;
+    private final ReservaHuespedRepository huespedRepository;
+    private final GrupoRepository grupoRepository;
+    private final CanalesVentaRepository canalesVentaRepository;
 
     public List<ReservaResponse> findAll() {
         return reservaRepository.findAll().stream().map(this::toResponse).toList();
@@ -71,6 +81,14 @@ public class ReservaService {
             throw new BusinessException("Debe seleccionar al menos una habitación");
         }
 
+        for (UUID habId : request.getHabitacionesIds()) {
+            if (!reservaRepository.isHabitacionDisponible(habId, request.getFechaIngreso(), request.getFechaSalida())) {
+                Habitacion h = habitacionRepository.findById(habId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Habitación", habId));
+                throw new BusinessException("La habitación " + h.getNumero() + " no está disponible en esas fechas");
+            }
+        }
+
         String codigo = generarCodigoReserva();
 
         Reserva reserva = Reserva.builder()
@@ -82,14 +100,10 @@ public class ReservaService {
                 .estado("pendiente")
                 .creadoPor(creadoPor)
                 .adultos(request.getAdultos() != null ? request.getAdultos() : 1)
-                .adolescentes(request.getAdolescentes() != null ? request.getAdolescentes() : 0)
                 .ninos(request.getNinos() != null ? request.getNinos() : 0)
-                .bebes(request.getBebes() != null ? request.getBebes() : 0)
-                .canalVenta(request.getCanalVenta() != null ? request.getCanalVenta() : "directo")
-                .tipoCliente(request.getTipoCliente() != null ? request.getTipoCliente() : "transient")
-                .cambiosReserva(0)
-                .solicitudesEspeciales(0)
-                .cancelacionesPrevias(0)
+                .canalVenta(canalesVentaRepository.findById(request.getCanalVentaId())
+                        .orElseThrow(() -> new BusinessException("Canal de venta no válido")))
+                .canalVentaOtro(request.getCanalVentaOtro())
                 .build();
 
         reserva = reservaRepository.save(reserva);
@@ -121,13 +135,40 @@ public class ReservaService {
                     .build();
             detalleRepository.save(detalle);
 
-            if (!"por_limpiar".equals(habitacion.getEstadoActual())) {
-                habitacion.setEstadoActual("por_limpiar");
-            }
             habitacionRepository.save(habitacion);
         }
 
         return toResponse(reservaRepository.findById(reserva.getId()).orElseThrow());
+    }
+
+    @Transactional
+    public ReservaResponse cancelar(UUID id, CancelarReservaRequest request, UUID usuarioId) {
+        Reserva reserva = reservaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Reserva", id));
+
+        if (!"pendiente".equals(reserva.getEstado())) {
+            throw new BusinessException("Solo se pueden cancelar reservas en estado 'pendiente'");
+        }
+
+        Usuario canceladoPor = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario", usuarioId));
+
+        reserva.setEstado("cancelada");
+        reserva.setMotivoCancelacion(request.getMotivoCancelacion());
+        reserva.setObservacionesCancelacion(request.getObservaciones());
+        reserva.setFechaCancelacion(LocalDateTime.now());
+        reserva.setCanceladoPor(canceladoPor);
+        reserva = reservaRepository.save(reserva);
+
+        for (ReservaDetalle detalle : reserva.getDetalles()) {
+            Habitacion habitacion = detalle.getHabitacion();
+            if ("por_limpiar".equals(habitacion.getEstadoActual())) {
+                habitacion.setEstadoActual("disponible");
+                habitacionRepository.save(habitacion);
+            }
+        }
+
+        return toResponse(reserva);
     }
 
     @Transactional
@@ -141,6 +182,7 @@ public class ReservaService {
 
         reserva.setEstado("cancelada");
         reserva.setMotivoCancelacion(motivo);
+        reserva.setFechaCancelacion(LocalDateTime.now());
         reserva = reservaRepository.save(reserva);
 
         for (ReservaDetalle detalle : reserva.getDetalles()) {
@@ -246,17 +288,19 @@ public class ReservaService {
                 .clienteNombre(reserva.getCliente().getNombres() + " " + reserva.getCliente().getApellidos())
                 .estado(reserva.getEstado())
                 .motivoCancelacion(reserva.getMotivoCancelacion())
+                .observacionesCancelacion(reserva.getObservacionesCancelacion())
+                .fechaCancelacion(reserva.getFechaCancelacion())
+                .canceladoPor(reserva.getCanceladoPor() != null ? reserva.getCanceladoPor().getId() : null)
+                .canceladoPorNombre(reserva.getCanceladoPor() != null
+                        ? reserva.getCanceladoPor().getNombres() + " " + reserva.getCanceladoPor().getApellidos()
+                        : null)
                 .creadoPor(reserva.getCreadoPor().getId())
                 .creadoPorNombre(reserva.getCreadoPor().getNombres() + " " + reserva.getCreadoPor().getApellidos())
                 .adultos(reserva.getAdultos())
-                .adolescentes(reserva.getAdolescentes())
                 .ninos(reserva.getNinos())
-                .bebes(reserva.getBebes())
-                .canalVenta(reserva.getCanalVenta())
-                .tipoCliente(reserva.getTipoCliente())
-                .cambiosReserva(reserva.getCambiosReserva())
-                .solicitudesEspeciales(reserva.getSolicitudesEspeciales())
-                .cancelacionesPrevias(reserva.getCancelacionesPrevias())
+                .canalVentaNombre(reserva.getCanalVenta().getNombre())
+                .canalVentaIcono(reserva.getCanalVenta().getIcono())
+                .canalVentaOtro(reserva.getCanalVentaOtro())
                 .createdAt(reserva.getCreatedAt())
                 .updatedAt(reserva.getUpdatedAt())
                 .detalles(!estadosSinDetalle.contains(reserva.getEstado())
@@ -271,6 +315,79 @@ public class ReservaService {
                                     .build())
                             .toList()
                         : List.of())
+                .grupoId(reserva.getGrupo() != null ? reserva.getGrupo().getId() : null)
+                .nombreGrupo(reserva.getGrupo() != null ? reserva.getGrupo().getNombreGrupo() : null)
+                .huespedes(huespedRepository.findByReservaId(reserva.getId()).stream()
+                        .map(h -> ReservaHuespedResponse.builder()
+                                .id(h.getId())
+                                .reservaId(h.getReserva().getId())
+                                .clienteId(h.getCliente().getId())
+                                .clienteNombre(h.getCliente().getNombres() + " " + h.getCliente().getApellidos())
+                                .clienteDocumento(h.getCliente().getTipoDocumento() + ": " + h.getCliente().getNumeroDocumento())
+                                .esTitular(h.getEsTitular())
+                                .createdAt(h.getCreatedAt())
+                                .build())
+                        .toList())
                 .build();
+    }
+
+    public List<PanelReservaItem> getPanelReservas() {
+        List<Reserva> individuales = reservaRepository.findByGrupoIdIsNull();
+        List<Grupo> grupos = grupoRepository.findAll();
+
+        List<PanelReservaItem> resultado = new ArrayList<>();
+
+        for (Reserva r : individuales) {
+            resultado.add(PanelReservaItem.builder()
+                    .tipo("INDIVIDUAL")
+                    .codigo(r.getCodigo())
+                    .cliente(r.getCliente().getNombres() + " " + r.getCliente().getApellidos())
+                    .fechaIngreso(r.getFechaIngreso())
+                    .fechaSalida(r.getFechaSalida())
+                    .grupoNombre(null)
+                    .estado(r.getEstado())
+                    .build());
+        }
+
+        for (Grupo g : grupos) {
+            List<Reserva> hijas = reservaRepository.findByGrupoId(g.getId());
+            List<PanelReservaItem> hijasItems = hijas.stream().map(h -> {
+                String titularNombre = huespedRepository.findByReservaId(h.getId()).stream()
+                        .filter(ReservaHuesped::getEsTitular)
+                        .findFirst()
+                        .map(hue -> hue.getCliente().getNombres() + " " + hue.getCliente().getApellidos())
+                        .orElse(h.getCliente().getNombres() + " " + h.getCliente().getApellidos());
+                return PanelReservaItem.builder()
+                        .tipo("HIJA")
+                        .codigo(h.getCodigo())
+                        .cliente(titularNombre)
+                        .fechaIngreso(h.getFechaIngreso())
+                        .fechaSalida(h.getFechaSalida())
+                        .grupoNombre(null)
+                        .estado(h.getEstado())
+                        .build();
+            }).toList();
+
+            PanelReservaItem cabecera = PanelReservaItem.builder()
+                    .tipo("GRUPO")
+                    .codigo(g.getNombreGrupo())
+                    .cliente(g.getResponsablePago().getNombres() + " " + g.getResponsablePago().getApellidos())
+                    .fechaIngreso(g.getFechaIngreso())
+                    .fechaSalida(g.getFechaSalida())
+                    .grupoNombre(g.getNombreGrupo())
+                    .estado(hijasItems.stream().allMatch(h -> "pendiente".equals(h.getEstado())) ? "pendiente" : "mixto")
+                    .hijas(hijasItems)
+                    .build();
+
+            resultado.add(cabecera);
+        }
+
+        resultado.sort((a, b) -> {
+            int cmp = b.getFechaIngreso().compareTo(a.getFechaIngreso());
+            if (cmp != 0) return cmp;
+            return a.getCodigo().compareTo(b.getCodigo());
+        });
+
+        return resultado;
     }
 }

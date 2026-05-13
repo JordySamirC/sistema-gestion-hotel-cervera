@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -19,9 +20,12 @@ public class ClienteResponse {
     private String nombres;
     private String apellidos;
     private String nacionalidad;
+    private String genero;
+    private String estado;
     private String telefono;
     private String email;
     private Integer vecesHospedado;
+    private LocalDate fechaNacimiento;
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
 }

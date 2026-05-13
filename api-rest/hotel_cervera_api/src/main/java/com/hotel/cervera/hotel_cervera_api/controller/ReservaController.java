@@ -5,6 +5,7 @@ import com.hotel.cervera.hotel_cervera_api.dto.request.CancelarReservaRequest;
 import com.hotel.cervera.hotel_cervera_api.dto.request.ReservaDetalleRequest;
 import com.hotel.cervera.hotel_cervera_api.dto.request.ReservaRequest;
 import com.hotel.cervera.hotel_cervera_api.dto.response.ReservaDetalleResponse;
+import com.hotel.cervera.hotel_cervera_api.dto.response.PanelReservaItem;
 import com.hotel.cervera.hotel_cervera_api.dto.response.ReservaResponse;
 import com.hotel.cervera.hotel_cervera_api.service.ReservaService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -14,9 +15,11 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -78,14 +81,16 @@ public class ReservaController {
     }
 
     @PatchMapping("/{id}/cancelar")
-    @Operation(summary = "Cancelar una reserva", description = "Cancela una reserva existente indicando el motivo")
+    @Operation(summary = "Cancelar una reserva", description = "Cancela una reserva existente indicando el motivo y observaciones")
     @ApiResponses(value = {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Reserva cancelada exitosamente"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Reserva no encontrada")
     })
     public ResponseEntity<ReservaResponse> cancelar(@PathVariable UUID id,
                                                      @Valid @RequestBody CancelarReservaRequest request) {
-        return ResponseEntity.ok(reservaService.cancelar(id, request.getMotivoCancelacion()));
+        String userIdStr = SecurityContextHolder.getContext().getAuthentication().getName();
+        UUID usuarioId = UUID.fromString(userIdStr);
+        return ResponseEntity.ok(reservaService.cancelar(id, request, usuarioId));
     }
 
     @DeleteMapping("/{id}")
@@ -97,6 +102,12 @@ public class ReservaController {
     public ResponseEntity<ApiResponse> delete(@PathVariable UUID id) {
         reservaService.delete(id);
         return ResponseEntity.ok(ApiResponse.ok("Reserva eliminada correctamente"));
+    }
+
+    @GetMapping("/panel")
+    @Operation(summary = "Obtener panel unificado de reservas", description = "Retorna una lista unificada con reservas individuales y grupos (con sus hijas) para el panel de reservas")
+    public ResponseEntity<List<PanelReservaItem>> getPanel() {
+        return ResponseEntity.ok(reservaService.getPanelReservas());
     }
 
     @GetMapping("/{reservaId}/detalles")

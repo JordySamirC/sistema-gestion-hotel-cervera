@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -24,18 +25,21 @@ public class ReservaResponse {
     private String clienteNombre;
     private String estado;
     private String motivoCancelacion;
+    private String observacionesCancelacion;
+    private LocalDateTime fechaCancelacion;
+    private UUID canceladoPor;
+    private String canceladoPorNombre;
     private UUID creadoPor;
     private String creadoPorNombre;
     private Integer adultos;
-    private Integer adolescentes;
     private Integer ninos;
-    private Integer bebes;
-    private String canalVenta;
-    private String tipoCliente;
-    private Integer cambiosReserva;
-    private Integer solicitudesEspeciales;
-    private Integer cancelacionesPrevias;
+    private String canalVentaNombre;
+    private String canalVentaIcono;
+    private String canalVentaOtro;
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
+    private UUID grupoId;
+    private String nombreGrupo;
     private List<ReservaDetalleResponse> detalles;
+    private List<ReservaHuespedResponse> huespedes;
 }

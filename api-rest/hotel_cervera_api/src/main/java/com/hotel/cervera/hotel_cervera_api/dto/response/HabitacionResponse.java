@@ -18,6 +18,7 @@ public class HabitacionResponse {
     private Integer piso;
     private UUID tipoId;
     private String tipoNombre;
+    private Integer capacidadMax;
     private String estadoActual;
     private String notas;
     private OffsetDateTime createdAt;

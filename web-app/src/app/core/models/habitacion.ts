@@ -4,6 +4,7 @@ export interface HabitacionResponse {
   piso: number;
   tipoId: string;
   tipoNombre: string;
+  capacidadMax: number;
   estadoActual: string;
   notas: string;
   createdAt: string;

@@ -11,14 +11,37 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import static java.util.Map.entry;
+
 @Service
-@RequiredArgsConstructor
 public class ClienteService {
 
     private final ClienteRepository repository;
+    private final PhoneValidationService phoneValidationService;
+
+    private static final Map<String, String> NACIONALIDAD_A_ISO = Map.ofEntries(
+        entry("Peruana", "PE"), entry("Argentina", "AR"), entry("Boliviana", "BO"),
+        entry("Brasileña", "BR"), entry("Canadiense", "CA"), entry("Chilena", "CL"),
+        entry("Colombiana", "CO"), entry("Costarricense", "CR"), entry("Cubana", "CU"),
+        entry("Dominicana", "DO"), entry("Ecuatoriana", "EC"), entry("Estadounidense", "US"),
+        entry("Francesa", "FR"), entry("Guatemalteca", "GT"), entry("Haitiana", "HT"),
+        entry("Hondureña", "HN"), entry("Italiana", "IT"), entry("Japonesa", "JP"),
+        entry("Mexicana", "MX"), entry("Nicaragüense", "NI"), entry("Panameña", "PA"),
+        entry("Paraguaya", "PY"), entry("Portuguesa", "PT"), entry("Puertorriqueña", "PR"),
+        entry("Salvadoreña", "SV"), entry("Española", "ES"), entry("Uruguaya", "UY"),
+        entry("Venezolana", "VE"), entry("Alemana", "DE"), entry("Británica", "GB"),
+        entry("China", "CN"), entry("Coreana", "KR"), entry("India", "IN"),
+        entry("Rusa", "RU"), entry("Sudafricana", "ZA")
+    );
+
+    public ClienteService(ClienteRepository repository, PhoneValidationService phoneValidationService) {
+        this.repository = repository;
+        this.phoneValidationService = phoneValidationService;
+    }
 
     public List<ClienteResponse> findAll() {
         return repository.findAll().stream().map(this::toResponse).toList();
@@ -37,23 +60,25 @@ public class ClienteService {
 
     @Transactional
     public ClienteResponse create(ClienteRequest request) {
-        Set<String> tiposValidos = Set.of("DNI", "PAS", "RUC");
-        if (!tiposValidos.contains(request.getTipoDocumento())) {
-            throw new BusinessException("Tipo de documento inválido. Use: DNI, PAS o RUC");
-        }
         if (repository.existsByTipoDocumentoAndNumeroDocumento(
                 request.getTipoDocumento(), request.getNumeroDocumento())) {
             throw new BusinessException("Ya existe un cliente con ese tipo y número de documento");
         }
+        String iso = NACIONALIDAD_A_ISO.get(request.getNacionalidad());
+        String telefonoNormalizado = phoneValidationService.normalizeToE164(request.getTelefono(), iso);
+        request.setTelefono(telefonoNormalizado);
         Cliente entity = Cliente.builder()
                 .tipoDocumento(request.getTipoDocumento())
                 .numeroDocumento(request.getNumeroDocumento())
                 .nombres(request.getNombres())
                 .apellidos(request.getApellidos())
                 .nacionalidad(request.getNacionalidad())
+                .genero(request.getGenero())
                 .telefono(request.getTelefono())
                 .email(request.getEmail())
+                .fechaNacimiento(request.getFechaNacimiento())
                 .vecesHospedado(0)
+                .estado("ACTIVO")
                 .build();
         return toResponse(repository.save(entity));
     }
@@ -70,13 +95,31 @@ public class ClienteService {
             throw new BusinessException("Ya existe un cliente con ese tipo y número de documento");
         }
 
+        String iso = NACIONALIDAD_A_ISO.get(request.getNacionalidad());
+        String telefonoNormalizado = phoneValidationService.normalizeToE164(request.getTelefono(), iso);
+        request.setTelefono(telefonoNormalizado);
+
         entity.setTipoDocumento(request.getTipoDocumento());
         entity.setNumeroDocumento(request.getNumeroDocumento());
         entity.setNombres(request.getNombres());
         entity.setApellidos(request.getApellidos());
         entity.setNacionalidad(request.getNacionalidad());
+        entity.setGenero(request.getGenero());
         entity.setTelefono(request.getTelefono());
         entity.setEmail(request.getEmail());
+        entity.setFechaNacimiento(request.getFechaNacimiento());
+        return toResponse(repository.save(entity));
+    }
+
+    @Transactional
+    public ClienteResponse cambiarEstado(UUID id, String nuevoEstado) {
+        Cliente entity = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Cliente", id));
+        Set<String> estadosValidos = Set.of("ACTIVO", "SUSPENDIDO", "VETADO");
+        if (!estadosValidos.contains(nuevoEstado.toUpperCase())) {
+            throw new BusinessException("Estado inválido. Use: ACTIVO, SUSPENDIDO o VETADO");
+        }
+        entity.setEstado(nuevoEstado.toUpperCase());
         return toResponse(repository.save(entity));
     }
 
@@ -96,8 +139,11 @@ public class ClienteService {
                 .nombres(entity.getNombres())
                 .apellidos(entity.getApellidos())
                 .nacionalidad(entity.getNacionalidad())
+                .genero(entity.getGenero())
+                .estado(entity.getEstado())
                 .telefono(entity.getTelefono())
                 .email(entity.getEmail())
+                .fechaNacimiento(entity.getFechaNacimiento())
                 .vecesHospedado(entity.getVecesHospedado())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())

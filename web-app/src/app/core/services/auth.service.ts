@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
-import { LoginRequest, LoginResponse } from '../models/usuario';
+import { ForgotPasswordRequest, LoginRequest, LoginResponse, ResetPasswordRequest } from '../models/usuario';
 import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -13,6 +13,7 @@ export class AuthService {
   constructor(private http: HttpClient) {}
 
   login(request: LoginRequest): Observable<LoginResponse> {
+    console.log('Login request payload:', JSON.stringify(request));
     return this.http.post<LoginResponse>(`${this.apiUrl}/login`, request).pipe(
       tap((res) => {
         localStorage.setItem(this.tokenKey, res.token);
@@ -44,10 +45,18 @@ export class AuthService {
   }
 
   esGerente(): boolean {
-    return this.getRol() === 'GERENTE';
+    return this.getRol() === 'gerente';
   }
 
   esLimpieza(): boolean {
-    return this.getRol() === 'LIMPIEZA';
+    return this.getRol() === 'limpieza';
+  }
+
+  forgotPassword(request: ForgotPasswordRequest): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/forgot-password`, request);
+  }
+
+  resetPassword(request: ResetPasswordRequest): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/reset-password`, request);
   }
 }

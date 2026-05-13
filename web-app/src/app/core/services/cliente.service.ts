@@ -33,6 +33,10 @@ export class ClienteService extends ApiService {
     return this.http.put<ClienteResponse>(`${this.baseUrl}/clientes/${id}`, request);
   }
 
+  cambiarEstado(id: string, estado: string): Observable<ClienteResponse> {
+    return this.http.patch<ClienteResponse>(`${this.baseUrl}/clientes/${id}/estado`, { estado });
+  }
+
   delete(id: string): Observable<ApiResponse> {
     return this.http.delete<ApiResponse>(`${this.baseUrl}/clientes/${id}`);
   }

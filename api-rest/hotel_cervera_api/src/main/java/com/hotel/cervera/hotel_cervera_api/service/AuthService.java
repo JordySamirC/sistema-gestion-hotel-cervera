@@ -24,7 +24,7 @@ public class AuthService {
 
     @Transactional
     public LoginResponse login(LoginRequest request) {
-        Usuario usuario = usuarioRepository.findActiveByNombreUsuario(request.getNombreUsuario())
+        Usuario usuario = usuarioRepository.findActiveByEmail(request.getEmail())
                 .orElseThrow(() -> new UnauthorizedException("Credenciales inválidas"));
 
         if (!"activo".equals(usuario.getEstado())) {
@@ -36,7 +36,7 @@ public class AuthService {
                     ? usuario.getIntentosFallidos() + 1 : 1);
             if (usuario.getIntentosFallidos() >= 5) {
                 usuario.setEstado("bloqueado");
-                usuario.setBloqueadoHasta(OffsetDateTime.now().plusHours(1));
+                usuario.setBloqueadoHasta(OffsetDateTime.now().plusMinutes(15));
             }
             usuarioRepository.save(usuario);
             throw new UnauthorizedException("Credenciales inválidas");
@@ -48,7 +48,7 @@ public class AuthService {
 
         String token = jwtUtil.generateToken(
                 usuario.getId(),
-                usuario.getNombreUsuario(),
+                usuario.getEmail(),
                 usuario.getRol().getNombre()
         );
 

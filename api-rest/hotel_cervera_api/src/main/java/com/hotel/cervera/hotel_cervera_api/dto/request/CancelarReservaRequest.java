@@ -12,4 +12,6 @@ public class CancelarReservaRequest {
 
     @NotBlank(message = "El motivo de cancelación es obligatorio")
     private String motivoCancelacion;
+
+    private String observaciones;
 }

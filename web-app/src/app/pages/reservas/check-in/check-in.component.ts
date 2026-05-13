@@ -93,7 +93,7 @@ export class CheckInComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.service.getAll('Confirmada').subscribe({
+    this.service.getAll('pendiente').subscribe({
       next: (data) => this.reservasConfirmadas = data
     });
   }
@@ -102,10 +102,10 @@ export class CheckInComponent implements OnInit {
     if (!this.codigoBusqueda) return;
     this.service.getByCodigo(this.codigoBusqueda).subscribe({
       next: (reserva) => {
-        if (reserva.estado === 'Confirmada') {
+        if (reserva.estado === 'pendiente') {
           this.reservasConfirmadas = [reserva];
         } else {
-          alert(`La reserva ${this.codigoBusqueda} no está en estado Confirmada`);
+          alert(`La reserva ${this.codigoBusqueda} no está pendiente de check-in`);
         }
       },
       error: () => alert('Reserva no encontrada')
