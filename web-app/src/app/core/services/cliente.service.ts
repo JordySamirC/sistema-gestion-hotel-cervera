@@ -15,6 +15,12 @@ export class ClienteService extends ApiService {
     return this.http.get<ClienteResponse[]>(`${this.baseUrl}/clientes`);
   }
 
+  buscarResponsables(termino: string): Observable<ClienteResponse[]> {
+    return this.http.get<ClienteResponse[]>(`${this.baseUrl}/clientes/search`, {
+      params: { termino }
+    });
+  }
+
   getById(id: string): Observable<ClienteResponse> {
     return this.http.get<ClienteResponse>(`${this.baseUrl}/clientes/${id}`);
   }

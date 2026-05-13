@@ -40,4 +40,6 @@ public class GrupoRequest {
 
     @NotNull(message = "El usuario creador es obligatorio")
     private UUID creadoPor;
+
+    private Boolean facturarTodoAlResponsable;
 }

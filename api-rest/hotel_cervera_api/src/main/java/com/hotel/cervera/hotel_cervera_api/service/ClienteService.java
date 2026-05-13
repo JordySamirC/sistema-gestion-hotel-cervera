@@ -58,6 +58,13 @@ public class ClienteService {
                         "Cliente", "documento", tipoDocumento + "-" + numeroDocumento)));
     }
 
+    public List<ClienteResponse> buscarPorTermino(String termino) {
+        return repository.buscarPorTermino(termino).stream()
+                .limit(20)
+                .map(this::toResponse)
+                .toList();
+    }
+
     @Transactional
     public ClienteResponse create(ClienteRequest request) {
         if (repository.existsByTipoDocumentoAndNumeroDocumento(

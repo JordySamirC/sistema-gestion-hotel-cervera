@@ -1,7 +1,15 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import { FormControl } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { Observable, of } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap, catchError } from 'rxjs/operators';
+import { MatInputModule } from '@angular/material/input';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { ReservaService } from '../../../core/services/reserva.service';
 import { ClienteService } from '../../../core/services/cliente.service';
 import { HabitacionService } from '../../../core/services/habitacion.service';
@@ -23,7 +31,8 @@ interface HabitacionEnFormulario {
 @Component({
   selector: 'app-grupo-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink,
+    MatInputModule, MatAutocompleteModule, MatDatepickerModule, MatNativeDateModule, MatFormFieldModule],
   template: `
     <div class="page">
       <div class="page-header">
@@ -33,19 +42,53 @@ interface HabitacionEnFormulario {
 
       <div class="card">
         <div class="card-body">
-          <form (ngSubmit)="onCreate()" class="form">
+          <form [formGroup]="grupoForm" (ngSubmit)="onCreate()" class="form">
             <h3>Datos del Grupo</h3>
+
             <div class="form-row">
               <div class="form-group">
                 <label>Nombre del Grupo <span class="required">*</span></label>
-                <input type="text" [(ngModel)]="form.nombreGrupo" name="nombreGrupo" required placeholder="Ej: Familia Pérez, Tour Grupo A" />
+                <input type="text" formControlName="nombreGrupo" placeholder="Ej: Familia Pérez, Tour Grupo A" />
               </div>
               <div class="form-group">
-                <label>Responsable de Pago <span class="required">*</span></label>
-                <select [(ngModel)]="form.responsablePagoId" name="responsablePago" required>
-                  <option value="">Seleccione...</option>
-                  <option *ngFor="let c of clientes" [value]="c.id">{{ c.nombres }} {{ c.apellidos }} - {{ c.numeroDocumento }}</option>
-                </select>
+                <label class="required">Responsable de Pago *</label>
+                <mat-form-field appearance="outline" class="full-width" subscriptSizing="dynamic">
+                  <input type="text"
+                         matInput
+                         [formControl]="responsableControl"
+                         [matAutocomplete]="auto"
+                         placeholder="Buscar por DNI, nombre o teléfono"
+                         autocomplete="off">
+                  <mat-autocomplete #auto="matAutocomplete"
+                                    (optionSelected)="onResponsableSelected($event)"
+                                    [displayWith]="displayCliente">
+                    <mat-option *ngFor="let cliente of clientesFiltrados | async" [value]="cliente">
+                      <div class="cliente-option">
+                        <div class="cliente-nombre">
+                          <strong>{{ cliente.nombres }} {{ cliente.apellidos }}</strong>
+                        </div>
+                        <div class="cliente-detalles">
+                          <span> {{ cliente.numeroDocumento }}</span>
+                          <span> {{ cliente.telefono }}</span>
+                          <span> {{ cliente.nacionalidad }}</span>
+                        </div>
+                      </div>
+                    </mat-option>
+                  </mat-autocomplete>
+                </mat-form-field>
+                <div *ngIf="responsableSeleccionado" class="cliente-seleccionado">
+                  <div class="alert alert-success">
+                    Responsable seleccionado:
+                    <strong>{{ responsableSeleccionado.nombres }} {{ responsableSeleccionado.apellidos }}</strong><br>
+                    {{ responsableSeleccionado.numeroDocumento }} |
+                    {{ responsableSeleccionado.telefono }} |
+                    {{ responsableSeleccionado.nacionalidad }}
+                  </div>
+                </div>
+                <div *ngIf="responsableControl.touched && !responsableSeleccionado" class="error-message">
+                  Debes seleccionar un responsable de pago
+                </div>
+                <input type="hidden" formControlName="responsablePagoId" />
               </div>
             </div>
 
@@ -56,29 +99,64 @@ interface HabitacionEnFormulario {
                   type="button"
                   *ngFor="let c of canalesVenta"
                   class="canal-card"
-                  [class.selected]="form.canalVentaId === c.id"
+                  [class.selected]="grupoForm.get('canalVentaId')?.value === c.id"
                   (click)="seleccionarCanal(c)"
                 >
                   <span class="canal-icono">{{ c.icono }}</span>
                   <span class="canal-nombre">{{ c.nombre }}</span>
-                  <span *ngIf="form.canalVentaId === c.id" class="check-mark">✓</span>
+                  <span *ngIf="grupoForm.get('canalVentaId')?.value === c.id" class="check-mark">✓</span>
                 </button>
               </div>
-              <div *ngIf="form.canalVentaId && canalSeleccionadoEsOtro()" class="form-group" style="margin-top: 8px;">
+              <div *ngIf="grupoForm.get('canalVentaId')?.value && canalSeleccionadoEsOtro()" class="form-group" style="margin-top: 8px;">
                 <label>Especifique el canal <span class="required">*</span></label>
-                <input type="text" [(ngModel)]="form.canalVentaOtro" name="canalVentaOtro" placeholder="¿A través de qué medio nos contactó?" required />
+                <input type="text" formControlName="canalVentaOtro" placeholder="¿A través de qué medio nos contactó?" />
               </div>
             </div>
 
             <div class="form-row">
               <div class="form-group">
                 <label>Fecha Ingreso <span class="required">*</span></label>
-                <input type="date" [(ngModel)]="form.fechaIngreso" name="fechaIngreso" required (change)="onFechasChange()" />
+                <mat-form-field appearance="outline" class="full-width" subscriptSizing="dynamic">
+                  <input matInput [matDatepicker]="ingresoPicker"
+                         formControlName="fechaIngreso"
+                         [min]="minDate" [max]="maxDate"
+                         (dateChange)="onFechasChange()"
+                         placeholder="dd/mm/aaaa">
+                  <mat-datepicker-toggle matSuffix [for]="ingresoPicker"></mat-datepicker-toggle>
+                  <mat-datepicker #ingresoPicker startView="month"></mat-datepicker>
+                  <mat-error *ngIf="fechaIngreso?.hasError('required')">
+                    La fecha de ingreso es obligatoria
+                  </mat-error>
+                  <mat-error *ngIf="fechaIngreso?.hasError('matDatepickerMin')">
+                    No se pueden hacer reservas en fechas pasadas
+                  </mat-error>
+                  <mat-error *ngIf="fechaIngreso?.hasError('matDatepickerMax')">
+                    Solo se pueden hacer reservas con hasta 30 d&iacute;as de anticipaci&oacute;n
+                  </mat-error>
+                </mat-form-field>
               </div>
               <div class="form-group">
                 <label>Fecha Salida <span class="required">*</span></label>
-                <input type="date" [(ngModel)]="form.fechaSalida" name="fechaSalida" required (change)="onFechasChange()" />
+                <mat-form-field appearance="outline" class="full-width" subscriptSizing="dynamic">
+                  <input matInput [matDatepicker]="salidaPicker"
+                         formControlName="fechaSalida"
+                         [min]="minFechaSalida"
+                         placeholder="dd/mm/aaaa">
+                  <mat-datepicker-toggle matSuffix [for]="salidaPicker"></mat-datepicker-toggle>
+                  <mat-datepicker #salidaPicker startView="month"></mat-datepicker>
+                  <mat-error *ngIf="fechaSalida?.hasError('required')">
+                    La fecha de salida es obligatoria
+                  </mat-error>
+                  <mat-error *ngIf="fechaSalida?.hasError('matDatepickerMin')">
+                    La fecha de salida debe ser posterior a la fecha de ingreso
+                  </mat-error>
+                </mat-form-field>
               </div>
+            </div>
+
+            <div *ngIf="grupoForm.hasError('fechaInvalida') && grupoForm.touched"
+                 class="global-error-message">
+              {{ grupoForm.getError('fechaInvalida') }}
             </div>
 
             <h3>Habitaciones</h3>
@@ -116,7 +194,7 @@ interface HabitacionEnFormulario {
               </div>
 
               <div class="room-section">
-                <div class="section-label">👑 TITULAR</div>
+                <div class="section-label">TITULAR</div>
                 <div *ngIf="h.titular" class="guest-card titular-card">
                   <div class="guest-info">
                     <strong>{{ h.titular.nombres }} {{ h.titular.apellidos }}</strong>
@@ -124,14 +202,14 @@ interface HabitacionEnFormulario {
                   </div>
                   <button type="button" class="btn-sm" (click)="cambiarTitularConConfirm(h)">Cambiar Titular</button>
                 </div>
-                <button *ngIf="!h.titular" type="button" class="btn-add" (click)="abrirModal(h, 'titular')">+ Elegir Titular 👑</button>
+                <button *ngIf="!h.titular" type="button" class="btn-add" (click)="abrirModal(h, 'titular')">+ Elegir Titular</button>
               </div>
 
               <div class="room-divider">&mdash; O &mdash;</div>
 
               <div class="room-section">
                 <div class="section-label">
-                  👥 ACOMPA&Ntilde;ANTES
+                  ACOMPA&Ntilde;ANTES
                   <span class="plazas-libres" [class.plazas-llenas]="getPlazasLibres(h) <= 0">
                     ({{ getPlazasLibres(h) }} plaza{{ getPlazasLibres(h) !== 1 ? 's' : '' }} libre{{ getPlazasLibres(h) !== 1 ? 's' : '' }})
                   </span>
@@ -150,7 +228,7 @@ interface HabitacionEnFormulario {
                   [class.btn-disabled]="getPlazasLibres(h) <= 0"
                   [disabled]="getPlazasLibres(h) <= 0"
                   (click)="abrirModal(h, 'acompanante')">
-                  + Agregar Acompa&ntilde;ante 👤
+                  + Agregar Acompa&ntilde;ante
                 </button>
               </div>
 
@@ -185,7 +263,7 @@ interface HabitacionEnFormulario {
     <div *ngIf="modalAbierto" class="modal-overlay" (click)="cerrarModal($event)">
       <div class="modal-content" (click)="$event.stopPropagation()">
         <div class="modal-header">
-          <h3>{{ accionModal === 'titular' ? 'Elegir Titular 👑' : 'Agregar Acompa&ntilde;ante 👤' }}</h3>
+          <h3>{{ accionModal === 'titular' ? 'Elegir Titular' : 'Agregar Acompa&ntilde;ante' }}</h3>
           <button type="button" class="btn-icon" (click)="cerrarModal()">&times;</button>
         </div>
         <div class="modal-body">
@@ -197,17 +275,17 @@ interface HabitacionEnFormulario {
             class="search-input"
             autofocus
           />
-          <div *ngIf="busquedaTermino.trim() && clientesFiltrados.length === 0" class="text-muted search-empty">
+          <div *ngIf="busquedaTermino.trim() && clientesFiltradosModal.length === 0" class="text-muted search-empty">
             Sin resultados para "<strong>{{ busquedaTermino }}</strong>"
           </div>
-          <div *ngFor="let c of clientesFiltrados" class="result-row">
+          <div *ngFor="let c of clientesFiltradosModal" class="result-row">
             <div class="result-info">
               <strong>{{ c.nombres }} {{ c.apellidos }}</strong>
               <span class="result-detail">DNI: {{ c.numeroDocumento }} | Tel: {{ c.telefono }}</span>
             </div>
             <div class="result-actions">
-              <button type="button" class="btn-titular" (click)="elegirTitular(habitacionModal!, c)">Elegir como Titular 👑</button>
-              <button type="button" class="btn-acompanante" (click)="agregarAcompanante(habitacionModal!, c)">Agregar como Acompa&ntilde;ante 👤</button>
+              <button type="button" class="btn-titular" (click)="elegirTitular(habitacionModal!, c)">Elegir como Titular</button>
+              <button type="button" class="btn-acompanante" (click)="agregarAcompanante(habitacionModal!, c)">Agregar como Acompa&ntilde;ante</button>
             </div>
           </div>
           <div class="modal-footer-link">
@@ -228,8 +306,9 @@ interface HabitacionEnFormulario {
     .form-group { margin-bottom: 16px; }
     label { display: block; margin-bottom: 4px; font-size: 0.8rem; color: #555; font-weight: 500; }
     .required { color: #c62828; }
-    input, select { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.85rem; box-sizing: border-box; transition: border-color 0.2s; }
-    input:focus, select:focus { outline: none; border-color: #1a237e; box-shadow: 0 0 0 3px rgba(26,35,126,0.1); }
+    input:not([type=checkbox]):not([type=hidden]):not(.mat-input-element) { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.85rem; box-sizing: border-box; transition: border-color 0.2s; }
+    input:not([type=checkbox]):not([type=hidden]):not(.mat-input-element):focus { outline: none; border-color: #1a237e; box-shadow: 0 0 0 3px rgba(26,35,126,0.1); }
+    .full-width { width: 100%; }
     .checkbox-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
     .checkbox-label { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer; padding: 8px 12px; border: 1px solid #eee; border-radius: 6px; transition: all 0.2s; }
     .checkbox-label:hover { border-color: #1a237e; background: #f5f5ff; }
@@ -292,6 +371,7 @@ interface HabitacionEnFormulario {
     .form-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 24px; padding-top: 16px; border-top: 1px solid #eee; }
     .alert { padding: 10px 14px; border-radius: 6px; font-size: 0.8rem; margin: 12px 0; }
     .alert-error { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
+    .alert-success { background: #d4edda; color: #155724; padding: 10px 14px; border-radius: 6px; border-left: 4px solid #28a745; font-size: 0.8rem; }
     .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: flex-start; justify-content: center; padding-top: 60px; z-index: 1000; }
     .modal-content { background: white; border-radius: 12px; width: 520px; max-width: 92vw; max-height: 75vh; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
     .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #eee; }
@@ -313,12 +393,27 @@ interface HabitacionEnFormulario {
     .modal-footer-link { padding: 12px 0 4px; border-top: 1px solid #f0f0f0; margin-top: 8px; }
     .crear-cliente-link { color: #1a237e; font-size: 0.85rem; font-weight: 500; text-decoration: none; }
     .crear-cliente-link:hover { text-decoration: underline; }
+    .cliente-seleccionado { margin-top: 8px; }
+    .error-message { color: #dc3545; font-size: 0.75rem; margin-top: 4px; }
+    .global-error-message { background: #f8d7da; color: #721c24; padding: 10px 15px; border-radius: 6px; margin-top: 10px; font-size: 0.8rem; border-left: 4px solid #dc3545; }
+    .cliente-option { padding: 8px 0; }
+    .cliente-nombre { font-size: 0.85rem; margin-bottom: 4px; }
+    .cliente-detalles { display: flex; gap: 15px; font-size: 0.75rem; color: #666; }
   `]
 })
 export class GrupoFormComponent implements OnInit {
-  clientes: ClienteResponse[] = [];
-  habitacionesDisponibles: HabitacionResponse[] = [];
+  grupoForm: FormGroup;
+  responsableControl = new FormControl();
+
+  minDate: Date;
+  maxDate: Date;
+  minFechaSalida: Date;
+
+  clientesFiltrados: Observable<ClienteResponse[]>;
+  responsableSeleccionado: ClienteResponse | null = null;
+
   allHabitaciones: HabitacionResponse[] = [];
+  habitacionesDisponibles: HabitacionResponse[] = [];
   habitacionesNoDisponibles: (HabitacionResponse & { motivo: string })[] = [];
   habitacionesSeleccionadas: HabitacionEnFormulario[] = [];
   canalesVenta: CanalVenta[] = [];
@@ -326,53 +421,119 @@ export class GrupoFormComponent implements OnInit {
 
   modalAbierto = false;
   busquedaTermino = '';
-  clientesFiltrados: ClienteResponse[] = [];
+  clientesFiltradosModal: ClienteResponse[] = [];
   habitacionModal: HabitacionEnFormulario | null = null;
   accionModal: 'titular' | 'acompanante' | null = null;
 
-  form: any = {
-    nombreGrupo: '',
-    responsablePagoId: '',
-    fechaIngreso: '',
-    fechaSalida: '',
-    canalVentaId: null,
-    canalVentaOtro: ''
-  };
-
   constructor(
+    private fb: FormBuilder,
     private service: ReservaService,
     private clienteService: ClienteService,
     private habitacionService: HabitacionService,
     private auth: AuthService,
     private router: Router
-  ) {}
+  ) {
+    this.minDate = new Date();
+    this.minDate.setHours(0, 0, 0, 0);
+
+    this.maxDate = new Date();
+    this.maxDate.setDate(this.maxDate.getDate() + 30);
+
+    this.minFechaSalida = new Date();
+    this.minFechaSalida.setDate(this.minFechaSalida.getDate() + 1);
+
+    this.grupoForm = this.fb.group({
+      nombreGrupo: ['', Validators.required],
+      responsablePagoId: ['', Validators.required],
+      canalVentaId: [null, Validators.required],
+      canalVentaOtro: [''],
+      fechaIngreso: ['', Validators.required],
+      fechaSalida: ['', Validators.required]
+    }, { validators: this.fechasValidator });
+
+    this.clientesFiltrados = this.responsableControl.valueChanges.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      switchMap(termino => {
+        if (!termino || typeof termino !== 'string' || termino.trim().length < 2) {
+          return of([]);
+        }
+        return this.clienteService.buscarResponsables(termino.trim()).pipe(
+          catchError(() => of([]))
+        );
+      })
+    );
+  }
 
   ngOnInit(): void {
-    this.clienteService.getAll().subscribe({ next: (data) => {
-      this.clientes = data;
-    }});
     this.habitacionService.getAll().subscribe({ next: (data) => {
       this.allHabitaciones = data;
       this.clasificarHabitaciones();
     }});
     this.service.getCanalesVenta().subscribe({ next: (data) => this.canalesVenta = data });
+
+    this.grupoForm.get('fechaIngreso')?.valueChanges.subscribe(ingreso => {
+      if (ingreso) {
+        const ingresoDate = new Date(ingreso);
+        this.minFechaSalida = new Date(ingresoDate);
+        this.minFechaSalida.setDate(ingresoDate.getDate() + 1);
+        const salidaActual = this.grupoForm.get('fechaSalida')?.value;
+        if (salidaActual && salidaActual <= ingreso) {
+          this.grupoForm.patchValue({ fechaSalida: null });
+        }
+      }
+    });
+  }
+
+  get fechaIngreso() { return this.grupoForm.get('fechaIngreso'); }
+  get fechaSalida() { return this.grupoForm.get('fechaSalida'); }
+
+  fechasValidator(group: FormGroup): ValidationErrors | null {
+    const ingreso = group.get('fechaIngreso')?.value;
+    const salida = group.get('fechaSalida')?.value;
+    if (!ingreso || !salida) return null;
+    if (salida <= ingreso) {
+      return { fechaInvalida: 'La fecha de salida debe ser posterior a la fecha de ingreso' };
+    }
+    return null;
+  }
+
+  displayCliente(cliente: ClienteResponse): string {
+    if (!cliente) return '';
+    return `${cliente.nombres} ${cliente.apellidos} - ${cliente.numeroDocumento}`;
+  }
+
+  onResponsableSelected(event: any): void {
+    const cliente: ClienteResponse | null = event.option.value;
+    if (!cliente) return;
+    this.responsableSeleccionado = cliente;
+    this.grupoForm.patchValue({ responsablePagoId: cliente.id });
+    this.responsableControl.setValue(this.displayCliente(cliente));
   }
 
   canalSeleccionadoEsOtro(): boolean {
-    const canal = this.canalesVenta.find(c => c.id === this.form.canalVentaId);
+    const canal = this.canalesVenta.find(c => c.id === this.grupoForm.get('canalVentaId')?.value);
     return canal?.nombre === 'Otro';
   }
 
   seleccionarCanal(c: CanalVenta): void {
-    this.form.canalVentaId = c.id;
+    this.grupoForm.patchValue({ canalVentaId: c.id });
     if (c.nombre !== 'Otro') {
-      this.form.canalVentaOtro = '';
+      this.grupoForm.patchValue({ canalVentaOtro: '' });
     }
   }
 
   onFechasChange(): void {
-    if (this.form.fechaIngreso && this.form.fechaSalida) {
-      this.habitacionService.getDisponibles(this.form.fechaIngreso, this.form.fechaSalida)
+    const ingreso = this.grupoForm.get('fechaIngreso')?.value;
+    const salida = this.grupoForm.get('fechaSalida')?.value;
+    if (ingreso && salida) {
+      const fmt = (d: Date) => {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+      };
+      this.habitacionService.getDisponibles(fmt(ingreso), fmt(salida))
         .subscribe({ next: (data) => {
           this.habitacionesDisponibles = data;
           this.clasificarNoDisponibles();
@@ -431,14 +592,14 @@ export class GrupoFormComponent implements OnInit {
     this.habitacionModal = h;
     this.accionModal = accion;
     this.busquedaTermino = '';
-    this.clientesFiltrados = [];
+    this.clientesFiltradosModal = [];
     this.modalAbierto = true;
   }
 
   cerrarModal(event?: MouseEvent): void {
     this.modalAbierto = false;
     this.busquedaTermino = '';
-    this.clientesFiltrados = [];
+    this.clientesFiltradosModal = [];
     this.habitacionModal = null;
     this.accionModal = null;
   }
@@ -446,15 +607,12 @@ export class GrupoFormComponent implements OnInit {
   filtrarClientes(): void {
     const term = this.busquedaTermino.toLowerCase().trim();
     if (!term) {
-      this.clientesFiltrados = [];
+      this.clientesFiltradosModal = [];
       return;
     }
-    this.clientesFiltrados = this.clientes.filter(c =>
-      c.nombres.toLowerCase().includes(term) ||
-      c.apellidos.toLowerCase().includes(term) ||
-      c.numeroDocumento.toLowerCase().includes(term) ||
-      c.telefono.toLowerCase().includes(term)
-    );
+    this.clienteService.buscarResponsables(term).subscribe({
+      next: (data) => this.clientesFiltradosModal = data
+    });
   }
 
   elegirTitular(h: HabitacionEnFormulario, c: ClienteResponse): void {
@@ -529,8 +687,8 @@ export class GrupoFormComponent implements OnInit {
   }
 
   puedeEnviar(): boolean {
-    if (!this.form.nombreGrupo || !this.form.responsablePagoId || !this.form.fechaIngreso || !this.form.fechaSalida || !this.form.canalVentaId || this.habitacionesSeleccionadas.length === 0) return false;
-    if (this.canalSeleccionadoEsOtro() && !this.form.canalVentaOtro?.trim()) return false;
+    if (this.grupoForm.invalid || this.habitacionesSeleccionadas.length === 0 || !this.responsableSeleccionado) return false;
+    if (this.canalSeleccionadoEsOtro() && !this.grupoForm.get('canalVentaOtro')?.value?.trim()) return false;
     return true;
   }
 
@@ -558,8 +716,20 @@ export class GrupoFormComponent implements OnInit {
         clasificarEdad(g.fechaNacimiento) === 'adulto_mayor'
       ).length;
       const ninos = allGuests.filter(g => clasificarEdad(g.fechaNacimiento) === 'nino').length;
+
+      const ingreso = this.grupoForm.get('fechaIngreso')?.value;
+      const salida = this.grupoForm.get('fechaSalida')?.value;
+      const fmtDate = (d: Date) => {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+      };
+
       return {
         habitacionId: h.habitacionId,
+        fechaIngreso: fmtDate(ingreso),
+        fechaSalida: fmtDate(salida),
         adultos,
         ...(ninos > 0 ? { ninos } : {}),
         huespedes: [
@@ -569,13 +739,22 @@ export class GrupoFormComponent implements OnInit {
       };
     });
 
+    const ingreso = this.grupoForm.get('fechaIngreso')?.value;
+    const salida = this.grupoForm.get('fechaSalida')?.value;
+    const fmtDate = (d: Date) => {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    };
+
     const request: GrupoRequest = {
-      nombreGrupo: this.form.nombreGrupo,
-      responsablePagoId: this.form.responsablePagoId,
-      fechaIngreso: this.form.fechaIngreso,
-      fechaSalida: this.form.fechaSalida,
-      canalVentaId: this.form.canalVentaId,
-      canalVentaOtro: this.form.canalVentaOtro || undefined,
+      nombreGrupo: this.grupoForm.get('nombreGrupo')?.value,
+      responsablePagoId: this.grupoForm.get('responsablePagoId')?.value,
+      fechaIngreso: fmtDate(ingreso),
+      fechaSalida: fmtDate(salida),
+      canalVentaId: this.grupoForm.get('canalVentaId')?.value,
+      canalVentaOtro: this.grupoForm.get('canalVentaOtro')?.value || undefined,
       reservas,
       creadoPor: user.id
     };

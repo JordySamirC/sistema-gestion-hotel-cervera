@@ -18,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -59,6 +60,18 @@ public class ClienteController {
     public ResponseEntity<ClienteResponse> buscarPorDocumento(
             @NotBlank @RequestParam String tipoDocumento, @NotBlank @RequestParam String numeroDocumento) {
         return ResponseEntity.ok(clienteService.buscarPorDocumento(tipoDocumento, numeroDocumento));
+    }
+
+    @GetMapping("/search")
+    @Operation(summary = "Buscar clientes por término", description = "Busca clientes por DNI, nombre, apellido o teléfono (mínimo 2 caracteres)")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Lista de clientes encontrados")
+    })
+    public ResponseEntity<List<ClienteResponse>> search(@RequestParam String termino) {
+        if (termino == null || termino.trim().length() < 2) {
+            return ResponseEntity.ok(Collections.emptyList());
+        }
+        return ResponseEntity.ok(clienteService.buscarPorTermino(termino.trim()));
     }
 
     @PostMapping

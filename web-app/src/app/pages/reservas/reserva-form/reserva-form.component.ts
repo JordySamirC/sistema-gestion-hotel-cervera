@@ -60,11 +60,12 @@ import { clasificarEdad } from '../../../core/utils/edad';
             <div class="form-row">
               <div class="form-group">
                 <label>Fecha Ingreso <span class="required">*</span></label>
-                <input type="date" [(ngModel)]="form.fechaIngreso" name="fechaIngreso" required (change)="onFechasChange()" />
+                <input type="date" [(ngModel)]="form.fechaIngreso" name="fechaIngreso" required [min]="minDate" [max]="maxDate" (change)="onFechasChange()" />
+                <div *ngIf="form.fechaIngreso && fechaInvalida" class="field-error">No puede ser menor a hoy</div>
               </div>
               <div class="form-group">
                 <label>Fecha Salida <span class="required">*</span></label>
-                <input type="date" [(ngModel)]="form.fechaSalida" name="fechaSalida" required (change)="onFechasChange()" />
+                <input type="date" [(ngModel)]="form.fechaSalida" name="fechaSalida" required [min]="minFechaSalida" [max]="maxDate" (change)="onFechasChange()" />
               </div>
             </div>
 
@@ -93,6 +94,8 @@ import { clasificarEdad } from '../../../core/utils/edad';
                 </div>
               </div>
             </div>
+
+            <div *ngIf="fechasInvalidas" class="field-error">La fecha de salida debe ser posterior a la de ingreso</div>
 
             <div *ngIf="error" class="alert alert-error">{{ error }}</div>
 
@@ -139,6 +142,7 @@ import { clasificarEdad } from '../../../core/utils/edad';
     .btn-primary:disabled { background: #9fa8da; cursor: not-allowed; }
     .btn-secondary { padding: 10px 24px; background: #f5f5f5; color: #555; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; font-size: 0.85rem; text-decoration: none; }
     .btn-secondary:hover { background: #eee; }
+    .field-error { padding: 6px 10px; border-radius: 4px; font-size: 0.75rem; background: #fff3e0; color: #e65100; border: 1px solid #ffe0b2; margin-top: 4px; }
     .alert { padding: 10px 14px; border-radius: 6px; font-size: 0.8rem; margin: 12px 0; }
     .alert-error { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; }
     .no-disponible-label { color: #999; margin-top: 12px; }
@@ -156,6 +160,25 @@ export class ReservaFormComponent implements OnInit {
   canalesVenta: CanalVenta[] = [];
   error = '';
 
+  hoy = new Date();
+  minDate: string;
+  maxDate: string;
+
+  get minFechaSalida(): string {
+    if (!this.form.fechaIngreso) return this.minDate;
+    const d = new Date(this.form.fechaIngreso);
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().split('T')[0];
+  }
+
+  get fechaInvalida(): boolean {
+    return !!this.form.fechaIngreso && this.form.fechaIngreso < this.minDate;
+  }
+
+  get fechasInvalidas(): boolean {
+    return !!this.form.fechaIngreso && !!this.form.fechaSalida && this.form.fechaSalida <= this.form.fechaIngreso;
+  }
+
   form: any = {
     fechaIngreso: '', fechaSalida: '', clienteId: '', creadoPor: '',
     adultos: 0, ninos: 0,
@@ -168,7 +191,12 @@ export class ReservaFormComponent implements OnInit {
     private habitacionService: HabitacionService,
     private auth: AuthService,
     private router: Router
-  ) {}
+  ) {
+    const d = new Date();
+    this.minDate = d.toISOString().split('T')[0];
+    d.setDate(d.getDate() + 30);
+    this.maxDate = d.toISOString().split('T')[0];
+  }
 
   ngOnInit(): void {
     this.clienteService.getAll().subscribe({ next: (data) => {
@@ -249,6 +277,7 @@ export class ReservaFormComponent implements OnInit {
   puedeEnviar(): boolean {
     if (!this.form.clienteId || !this.form.fechaIngreso || !this.form.fechaSalida || !this.form.canalVentaId || this.form.habitacionesIds.length === 0) return false;
     if (this.canalSeleccionadoEsOtro() && !this.form.canalVentaOtro?.trim()) return false;
+    if (this.fechaInvalida || this.fechasInvalidas) return false;
     return true;
   }
 
