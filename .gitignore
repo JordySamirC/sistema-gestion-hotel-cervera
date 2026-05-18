@@ -1,0 +1,14 @@
+.env
+migraciones-sql/
+
+# Node / Angular
+web-app/node_modules/
+web-app/.angular/
+web-app/dist/
+
+# Java / Maven build outputs
+api-rest/hotel_cervera_api/target/
+
+# Residuos / Metadatos locales
+.serena/
+%TEMP%/
