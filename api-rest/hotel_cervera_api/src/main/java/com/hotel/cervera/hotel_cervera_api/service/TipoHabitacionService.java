@@ -36,6 +36,7 @@ public class TipoHabitacionService {
         TipoHabitacion entity = TipoHabitacion.builder()
                 .nombre(request.getNombre())
                 .capacidadMax(request.getCapacidadMax())
+                .configuracionCamas(request.getConfiguracionCamas())
                 .descripcion(request.getDescripcion())
                 .build();
         return toResponse(repository.save(entity));
@@ -51,6 +52,7 @@ public class TipoHabitacionService {
         }
         entity.setNombre(request.getNombre());
         entity.setCapacidadMax(request.getCapacidadMax());
+        entity.setConfiguracionCamas(request.getConfiguracionCamas());
         entity.setDescripcion(request.getDescripcion());
         return toResponse(repository.save(entity));
     }
@@ -68,9 +70,10 @@ public class TipoHabitacionService {
                 .id(entity.getId())
                 .nombre(entity.getNombre())
                 .capacidadMax(entity.getCapacidadMax())
+                .configuracionCamas(entity.getConfiguracionCamas())
                 .descripcion(entity.getDescripcion())
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
+                .fechaCreacion(entity.getFechaCreacion())
+                .fechaActualizacion(entity.getFechaActualizacion())
                 .build();
     }
 }

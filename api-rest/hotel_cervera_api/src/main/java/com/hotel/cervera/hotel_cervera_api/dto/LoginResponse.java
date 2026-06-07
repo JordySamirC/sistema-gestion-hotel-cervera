@@ -17,7 +17,7 @@ public class LoginResponse {
     private String tipo;
     private UUID id;
     private String nombreUsuario;
-    private String email;
+    private String correoElectronico;
     private String nombres;
     private String apellidos;
     private String rol;

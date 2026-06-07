@@ -11,7 +11,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -33,14 +34,28 @@ public class CustomUserDetailsService implements UserDetailsService {
         Usuario usuario = usuarioRepository.findActiveById(userId)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado: " + username));
 
+        // Mapeo inteligente y flexible de roles para Spring Security
+        List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+        String roleName = usuario.getRol().getNombre();
+        
+        // 1. Agregar rol original (ej. "Gerente")
+        authorities.add(new SimpleGrantedAuthority("ROLE_" + roleName));
+        // 2. Agregar rol original en minúsculas (ej. "gerente")
+        authorities.add(new SimpleGrantedAuthority("ROLE_" + roleName.toLowerCase()));
+
+        // 3. Mapeo específico e inteligente de roles a los requeridos por SecurityConfig
+        if (roleName.equalsIgnoreCase("Gerente")) {
+            authorities.add(new SimpleGrantedAuthority("ROLE_gerente"));
+        } else if (roleName.equalsIgnoreCase("Asistente de Habitaciones") || roleName.equalsIgnoreCase("limpieza")) {
+            authorities.add(new SimpleGrantedAuthority("ROLE_limpieza"));
+        }
+
         return new User(
                 usuario.getId().toString(),
                 usuario.getContrasenaHash(),
                 usuario.getEstado().equals("activo"),
                 true, true, true,
-                Collections.singletonList(
-                        new SimpleGrantedAuthority("ROLE_" + usuario.getRol().getNombre())
-                )
+                authorities
         );
     }
 }

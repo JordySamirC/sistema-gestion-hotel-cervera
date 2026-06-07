@@ -21,6 +21,8 @@ public interface PagoRepository extends JpaRepository<Pago, UUID> {
 
     Optional<Pago> findByEstadiaId(UUID estadiaId);
 
+    Optional<Pago> findByGrupoId(UUID grupoId);
+
     @Query("SELECT p FROM Pago p WHERE DATE(p.fechaPago) BETWEEN :desde AND :hasta")
     List<Pago> findByFechaPagoBetween(@Param("desde") LocalDate desde, @Param("hasta") LocalDate hasta);
 

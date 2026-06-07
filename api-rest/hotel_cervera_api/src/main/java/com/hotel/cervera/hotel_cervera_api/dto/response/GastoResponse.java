@@ -18,11 +18,28 @@ public class GastoResponse {
     private UUID id;
     private LocalDate fechaGasto;
     private String descripcion;
-    private String categoria;
+    
+    private Long categoriaId;
+    private String categoriaNombre;
+    
+    private Long tipoGastoId;
+    private String tipoGastoNombre;
+    
     private BigDecimal monto;
-    private Boolean esFijo;
+    private String observaciones;
+    private String estado;
+    
+    // Trazabilidad
     private UUID creadoPor;
     private String creadoPorNombre;
-    private OffsetDateTime createdAt;
-    private OffsetDateTime updatedAt;
+    private OffsetDateTime fechaCreacion;
+    
+    private UUID actualizadoPor;
+    private String actualizadoPorNombre;
+    private OffsetDateTime fechaActualizacion;
+    
+    private OffsetDateTime fechaAnulacion;
+    private UUID anuladoPor;
+    private String anuladoPorNombre;
+    private String motivoAnulacion;
 }

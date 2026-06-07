@@ -1,11 +1,16 @@
 package com.hotel.cervera.hotel_cervera_api.controller;
 
 import com.hotel.cervera.hotel_cervera_api.dto.ApiResponse;
+import com.hotel.cervera.hotel_cervera_api.dto.request.ActualizarReservaRequest;
+import com.hotel.cervera.hotel_cervera_api.dto.request.AgregarHuespedRequest;
+import com.hotel.cervera.hotel_cervera_api.dto.request.CambiarHabitacionRequest;
 import com.hotel.cervera.hotel_cervera_api.dto.request.CancelarReservaRequest;
+import com.hotel.cervera.hotel_cervera_api.dto.request.ExtenderReservaRequest;
 import com.hotel.cervera.hotel_cervera_api.dto.request.ReservaDetalleRequest;
 import com.hotel.cervera.hotel_cervera_api.dto.request.ReservaRequest;
 import com.hotel.cervera.hotel_cervera_api.dto.response.ReservaDetalleResponse;
 import com.hotel.cervera.hotel_cervera_api.dto.response.PanelReservaItem;
+import com.hotel.cervera.hotel_cervera_api.dto.response.ReservaHuespedResponse;
 import com.hotel.cervera.hotel_cervera_api.dto.response.ReservaResponse;
 import com.hotel.cervera.hotel_cervera_api.service.ReservaService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -37,6 +42,9 @@ public class ReservaController {
     })
     public ResponseEntity<List<ReservaResponse>> findAll(
             @RequestParam(required = false) String estado) {
+        if ("RESERVADA".equalsIgnoreCase(estado)) {
+            reservaService.procesarInasistenciasAutomaticas();
+        }
         if (estado != null) return ResponseEntity.ok(reservaService.findByEstado(estado));
         return ResponseEntity.ok(reservaService.findAll());
     }
@@ -104,6 +112,30 @@ public class ReservaController {
         return ResponseEntity.ok(ApiResponse.ok("Reserva eliminada correctamente"));
     }
 
+    @PatchMapping("/{id}")
+    @Operation(summary = "Actualizar una reserva", description = "Actualiza fechas y/o número de huéspedes de una reserva existente")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Reserva actualizada exitosamente"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Datos inválidos o habitaciones no disponibles"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Reserva no encontrada")
+    })
+    public ResponseEntity<ReservaResponse> update(@PathVariable UUID id,
+                                                   @Valid @RequestBody ActualizarReservaRequest request) {
+        return ResponseEntity.ok(reservaService.update(id, request));
+    }
+
+    @PatchMapping("/{id}/extender")
+    @Operation(summary = "Extender una reserva", description = "Extiende la fecha de salida de una reserva existente")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Reserva extendida exitosamente"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Fecha inválida o habitaciones no disponibles"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Reserva no encontrada")
+    })
+    public ResponseEntity<ReservaResponse> extender(@PathVariable UUID id,
+                                                     @Valid @RequestBody ExtenderReservaRequest request) {
+        return ResponseEntity.ok(reservaService.extender(id, request));
+    }
+
     @GetMapping("/panel")
     @Operation(summary = "Obtener panel unificado de reservas", description = "Retorna una lista unificada con reservas individuales y grupos (con sus hijas) para el panel de reservas")
     public ResponseEntity<List<PanelReservaItem>> getPanel() {
@@ -139,8 +171,45 @@ public class ReservaController {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Detalle no encontrado")
     })
     public ResponseEntity<ApiResponse> removeDetalle(@PathVariable UUID reservaId,
-                                                      @PathVariable UUID detalleId) {
+                                                       @PathVariable UUID detalleId) {
         reservaService.removeDetalle(reservaId, detalleId);
         return ResponseEntity.ok(ApiResponse.ok("Detalle eliminado correctamente"));
+    }
+
+    @PostMapping("/{reservaId}/huespedes")
+    @Operation(summary = "Agregar huésped a reserva", description = "Agrega un cliente como acompañante a una reserva existente")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Huésped agregado exitosamente"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Datos inválidos o capacidad excedida"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Reserva o cliente no encontrado")
+    })
+    public ResponseEntity<ReservaHuespedResponse> agregarHuesped(
+            @PathVariable UUID reservaId, @Valid @RequestBody AgregarHuespedRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(reservaService.agregarHuesped(reservaId, request));
+    }
+
+    @DeleteMapping("/{reservaId}/huespedes/{huespedId}")
+    @Operation(summary = "Eliminar huésped de reserva", description = "Elimina un acompañante de una reserva existente")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Huésped eliminado correctamente"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "No se puede eliminar al titular"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Reserva o huésped no encontrado")
+    })
+    public ResponseEntity<ApiResponse> eliminarHuesped(@PathVariable UUID reservaId,
+                                                        @PathVariable UUID huespedId) {
+        reservaService.eliminarHuesped(reservaId, huespedId);
+        return ResponseEntity.ok(ApiResponse.ok("Huésped eliminado correctamente"));
+    }
+
+    @PatchMapping("/{reservaId}/habitacion")
+    @Operation(summary = "Cambiar habitación de reserva", description = "Cambia la habitación asignada a una reserva existente")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Habitación cambiada exitosamente"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Habitación no disponible o estado inválido"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Reserva o habitación no encontrada")
+    })
+    public ResponseEntity<ReservaResponse> cambiarHabitacion(@PathVariable UUID reservaId,
+                                                               @Valid @RequestBody CambiarHabitacionRequest request) {
+        return ResponseEntity.ok(reservaService.cambiarHabitacion(reservaId, request));
     }
 }

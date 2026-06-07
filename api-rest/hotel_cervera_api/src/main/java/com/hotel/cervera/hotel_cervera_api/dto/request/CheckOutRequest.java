@@ -16,5 +16,5 @@ public class CheckOutRequest {
     @NotNull
     private UUID estadiaId;
 
-    private OffsetDateTime fechaCheckOut;
+    private OffsetDateTime fechaSalida;
 }

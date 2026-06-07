@@ -2,6 +2,8 @@ package com.hotel.cervera.hotel_cervera_api.controller;
 
 import com.hotel.cervera.hotel_cervera_api.dto.ApiResponse;
 import com.hotel.cervera.hotel_cervera_api.dto.request.AddHabitacionRequest;
+import com.hotel.cervera.hotel_cervera_api.dto.request.CancelarGrupoRequest;
+import com.hotel.cervera.hotel_cervera_api.dto.request.ExtenderGrupoRequest;
 import com.hotel.cervera.hotel_cervera_api.dto.request.GrupoRequest;
 import com.hotel.cervera.hotel_cervera_api.dto.request.GrupoUpdateRequest;
 import com.hotel.cervera.hotel_cervera_api.dto.response.GrupoResponse;
@@ -73,5 +75,23 @@ public class GrupoController {
     @Operation(summary = "Obtener huéspedes de una reserva en grupo", description = "Lista los huéspedes asociados a una reserva dentro de un grupo")
     public ResponseEntity<List<ReservaHuespedResponse>> getHuespedes(@PathVariable UUID reservaId) {
         return ResponseEntity.ok(grupoService.getHuespedes(reservaId));
+    }
+
+    @PatchMapping("/{id}/cancelar")
+    @Operation(summary = "Cancelar grupo", description = "Cancela todas las reservas en estado RESERVADA del grupo")
+    public ResponseEntity<ApiResponse> cancelarGrupo(
+            @PathVariable UUID id,
+            @Valid @RequestBody CancelarGrupoRequest request,
+            @RequestParam UUID usuarioId) {
+        grupoService.cancelarGrupo(id, request, usuarioId);
+        return ResponseEntity.ok(ApiResponse.ok("Grupo cancelado exitosamente"));
+    }
+
+    @PatchMapping("/{id}/extender")
+    @Operation(summary = "Extender grupo", description = "Extiende la fecha de salida de todas las reservas activas del grupo")
+    public ResponseEntity<GrupoResponse> extenderGrupo(
+            @PathVariable UUID id,
+            @Valid @RequestBody ExtenderGrupoRequest request) {
+        return ResponseEntity.ok(grupoService.extenderGrupo(id, request));
     }
 }

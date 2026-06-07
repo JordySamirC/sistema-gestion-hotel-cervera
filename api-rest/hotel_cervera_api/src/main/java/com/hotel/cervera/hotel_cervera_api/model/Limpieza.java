@@ -34,6 +34,6 @@ public class Limpieza {
     private Integer duracionSegundos;
 
     @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private OffsetDateTime createdAt;
+    @Column(name = "fecha_creacion", updatable = false)
+    private OffsetDateTime fechaCreacion;
 }

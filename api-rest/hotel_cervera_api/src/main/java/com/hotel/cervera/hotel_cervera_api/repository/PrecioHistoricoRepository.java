@@ -17,15 +17,15 @@ public interface PrecioHistoricoRepository extends JpaRepository<PrecioHistorico
 
     List<PrecioHistorico> findByTipoHabitacionIdOrderByFechaInicioDesc(UUID tipoHabitacionId);
 
-    @Query("SELECT ph FROM PrecioHistorico ph WHERE ph.tipoHabitacion.id = :tipoHabitacionId " +
-           "AND ph.fechaInicio <= :fecha AND (ph.fechaFin IS NULL OR ph.fechaFin >= :fecha) " +
-           "ORDER BY ph.fechaInicio DESC")
+    @Query(value = "SELECT * FROM precios_historicos ph WHERE ph.tipo_habitacion_id = :tipoHabitacionId " +
+           "AND ph.fecha_inicio <= :fecha AND (ph.fecha_fin IS NULL OR ph.fecha_fin >= :fecha) " +
+           "ORDER BY ph.fecha_inicio DESC LIMIT 1", nativeQuery = true)
     Optional<PrecioHistorico> findPrecioVigente(@Param("tipoHabitacionId") UUID tipoHabitacionId,
                                                  @Param("fecha") LocalDate fecha);
 
-    @Query("SELECT ph.precioNoche FROM PrecioHistorico ph WHERE ph.tipoHabitacion.id = :tipoHabitacionId " +
-           "AND ph.fechaInicio <= :fecha AND (ph.fechaFin IS NULL OR ph.fechaFin >= :fecha) " +
-           "ORDER BY ph.fechaInicio DESC")
+    @Query(value = "SELECT ph.precio_noche FROM precios_historicos ph WHERE ph.tipo_habitacion_id = :tipoHabitacionId " +
+           "AND ph.fecha_inicio <= :fecha AND (ph.fecha_fin IS NULL OR ph.fecha_fin >= :fecha) " +
+           "ORDER BY ph.fecha_inicio DESC LIMIT 1", nativeQuery = true)
     Optional<BigDecimal> findPrecioVigenteValue(@Param("tipoHabitacionId") UUID tipoHabitacionId,
                                                  @Param("fecha") LocalDate fecha);
 }

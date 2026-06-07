@@ -19,10 +19,13 @@ public class HabitacionRequest {
     private String numero;
 
     @NotNull(message = "El piso es obligatorio")
+    @jakarta.validation.constraints.Min(value = 1, message = "El piso debe ser mayor o igual a 1")
     private Integer piso;
 
     @NotNull(message = "El tipo de habitación es obligatorio")
     private UUID tipoId;
+
+    private String estado;
 
     private String notas;
 }

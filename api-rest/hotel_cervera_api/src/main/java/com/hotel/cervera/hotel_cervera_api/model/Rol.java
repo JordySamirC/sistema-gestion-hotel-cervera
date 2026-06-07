@@ -24,10 +24,10 @@ public class Rol {
     private String descripcion;
 
     @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private OffsetDateTime createdAt;
+    @Column(name = "fecha_creacion", updatable = false)
+    private OffsetDateTime fechaCreacion;
 
     @UpdateTimestamp
-    @Column(name = "updated_at")
-    private OffsetDateTime updatedAt;
+    @Column(name = "fecha_actualizacion")
+    private OffsetDateTime fechaActualizacion;
 }

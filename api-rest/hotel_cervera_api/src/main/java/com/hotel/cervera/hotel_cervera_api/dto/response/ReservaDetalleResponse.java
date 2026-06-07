@@ -18,6 +18,8 @@ public class ReservaDetalleResponse {
     private UUID reservaId;
     private UUID habitacionId;
     private String habitacionNumero;
+    private String tipoNombre;
+    private Integer capacidadMax;
     private BigDecimal precioAplicado;
-    private OffsetDateTime createdAt;
+    private OffsetDateTime fechaCreacion;
 }

@@ -44,9 +44,9 @@ public class ClienteRequest {
     @Size(max = 30)
     private String telefono;
 
-    @Email(message = "Email inválido")
+    @Email(message = "Correo inválido")
     @Size(max = 100)
-    private String email;
+    private String correoElectronico;
 
     private LocalDate fechaNacimiento;
 }

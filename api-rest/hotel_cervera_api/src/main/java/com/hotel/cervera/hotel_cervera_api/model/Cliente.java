@@ -41,8 +41,8 @@ public class Cliente {
     @Column(name = "telefono", nullable = false, length = 30)
     private String telefono;
 
-    @Column(name = "email", length = 100)
-    private String email;
+    @Column(name = "correo_electronico", length = 100)
+    private String correoElectronico;
 
     @Column(name = "veces_hospedado")
     private Integer vecesHospedado;
@@ -55,10 +55,10 @@ public class Cliente {
     private String estado = "ACTIVO";
 
     @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private OffsetDateTime createdAt;
+    @Column(name = "fecha_creacion", updatable = false)
+    private OffsetDateTime fechaCreacion;
 
     @UpdateTimestamp
-    @Column(name = "updated_at")
-    private OffsetDateTime updatedAt;
+    @Column(name = "fecha_actualizacion")
+    private OffsetDateTime fechaActualizacion;
 }

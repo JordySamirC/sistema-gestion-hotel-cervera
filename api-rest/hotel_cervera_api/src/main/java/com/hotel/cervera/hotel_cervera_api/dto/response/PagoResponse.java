@@ -23,8 +23,28 @@ public class PagoResponse {
     private String tipoComprobante;
     private String serie;
     private Integer numero;
-    private String rucRazonSocial;
+    
+    // Datos del cliente
+    private String clienteNombre;
+    private String clienteTipoDocumento;
+    private String clienteDocumento;
+    private String clienteRuc;
+    private String clienteRazonSocial;
+
+    // Datos del emisor
+    private String emisorRuc;
+    private String emisorRazonSocial;
+
+    private String referenciaPago;
+    private String observaciones;
+    
     private BigDecimal montoNeto;
     private BigDecimal igv;
-    private OffsetDateTime createdAt;
+    private OffsetDateTime fechaCreacion;
+
+    // Campos para trazabilidad de grupos
+    private String modoPago;
+    private String descripcionHabitaciones;
+    private Integer cantidadHabitaciones;
+    private UUID grupoId;
 }

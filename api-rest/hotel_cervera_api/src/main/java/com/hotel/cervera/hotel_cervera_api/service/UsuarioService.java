@@ -40,8 +40,8 @@ public class UsuarioService {
         if (usuarioRepository.existsByNombreUsuario(request.getNombreUsuario())) {
             throw new BusinessException("El nombre de usuario ya está en uso");
         }
-        if (usuarioRepository.existsByEmail(request.getEmail())) {
-            throw new BusinessException("El email ya está en uso");
+        if (usuarioRepository.existsByCorreoElectronico(request.getCorreoElectronico())) {
+            throw new BusinessException("El correo electrónico ya está en uso");
         }
 
         Rol rol = rolRepository.findById(request.getRolId())
@@ -49,7 +49,7 @@ public class UsuarioService {
 
         Usuario usuario = Usuario.builder()
                 .nombreUsuario(request.getNombreUsuario())
-                .email(request.getEmail())
+                .correoElectronico(request.getCorreoElectronico())
                 .contrasenaHash(passwordEncoder.encode(request.getContrasena()))
                 .nombres(request.getNombres())
                 .apellidos(request.getApellidos())
@@ -68,12 +68,12 @@ public class UsuarioService {
 
         if (request.getNombres() != null) usuario.setNombres(request.getNombres());
         if (request.getApellidos() != null) usuario.setApellidos(request.getApellidos());
-        if (request.getEmail() != null) {
-            if (!usuario.getEmail().equals(request.getEmail())
-                    && usuarioRepository.existsByEmail(request.getEmail())) {
-                throw new BusinessException("El email ya está en uso");
+        if (request.getCorreoElectronico() != null) {
+            if (!usuario.getCorreoElectronico().equals(request.getCorreoElectronico())
+                    && usuarioRepository.existsByCorreoElectronico(request.getCorreoElectronico())) {
+                throw new BusinessException("El correo electrónico ya está en uso");
             }
-            usuario.setEmail(request.getEmail());
+            usuario.setCorreoElectronico(request.getCorreoElectronico());
         }
         if (request.getEstado() != null) usuario.setEstado(request.getEstado());
 
@@ -84,7 +84,7 @@ public class UsuarioService {
     public void softDelete(UUID id) {
         Usuario usuario = usuarioRepository.findActiveById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario", id));
-        usuario.setDeletedAt(OffsetDateTime.now());
+        usuario.setFechaEliminacion(OffsetDateTime.now());
         usuario.setEstado("suspendido");
         usuarioRepository.save(usuario);
     }
@@ -104,15 +104,15 @@ public class UsuarioService {
         return UsuarioResponse.builder()
                 .id(usuario.getId())
                 .nombreUsuario(usuario.getNombreUsuario())
-                .email(usuario.getEmail())
+                .correoElectronico(usuario.getCorreoElectronico())
                 .nombres(usuario.getNombres())
                 .apellidos(usuario.getApellidos())
                 .rolId(usuario.getRol().getId())
                 .rolNombre(usuario.getRol().getNombre())
                 .estado(usuario.getEstado())
                 .ultimoAcceso(usuario.getUltimoAcceso())
-                .createdAt(usuario.getCreatedAt())
-                .updatedAt(usuario.getUpdatedAt())
+                .fechaCreacion(usuario.getFechaCreacion())
+                .fechaActualizacion(usuario.getFechaActualizacion())
                 .build();
     }
 }

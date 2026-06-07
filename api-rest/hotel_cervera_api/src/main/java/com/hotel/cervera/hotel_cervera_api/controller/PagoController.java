@@ -54,6 +54,16 @@ public class PagoController {
         return ResponseEntity.ok(pagoService.findByEstadia(estadiaId));
     }
 
+    @GetMapping("/grupo/{grupoId}")
+    @Operation(summary = "Buscar pago por grupo", description = "Obtiene el pago consolidado asociado a un grupo")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Pago encontrado"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Pago no encontrado para ese grupo")
+    })
+    public ResponseEntity<PagoResponse> findByGrupo(@PathVariable UUID grupoId) {
+        return ResponseEntity.ok(pagoService.findByGrupo(grupoId));
+    }
+
     @GetMapping("/periodo")
     @Operation(summary = "Listar pagos por período", description = "Obtiene los pagos realizados en un rango de fechas")
     @ApiResponses(value = {

@@ -25,24 +25,50 @@ public class Gasto {
     @Column(name = "descripcion", nullable = false, length = 200)
     private String descripcion;
 
-    @Column(name = "categoria", nullable = false, length = 50)
-    private String categoria;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "categoria_id", nullable = false)
+    private CategoriaGasto categoria;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "tipo_gasto_id", nullable = false)
+    private TipoGasto tipoGasto;
 
     @Column(name = "monto", nullable = false, precision = 10, scale = 2)
     private BigDecimal monto;
 
-    @Column(name = "es_fijo")
-    private Boolean esFijo;
+    @Column(name = "observaciones", columnDefinition = "TEXT")
+    private String observaciones;
 
+    @Builder.Default
+    @Column(name = "estado", nullable = false, length = 20)
+    private String estado = "ACTIVO"; // ACTIVO, ANULADO
+
+    // Auditoría de Creación
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "creado_por", nullable = false)
     private Usuario creadoPor;
 
     @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private OffsetDateTime createdAt;
+    @Column(name = "fecha_creacion", updatable = false)
+    private OffsetDateTime fechaCreacion;
+
+    // Auditoría de Actualización
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "actualizado_por")
+    private Usuario actualizadoPor;
 
     @UpdateTimestamp
-    @Column(name = "updated_at")
-    private OffsetDateTime updatedAt;
+    @Column(name = "fecha_actualizacion")
+    private OffsetDateTime fechaActualizacion;
+
+    // Auditoría de Anulación
+    @Column(name = "fecha_anulacion")
+    private OffsetDateTime fechaAnulacion;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "anulado_por")
+    private Usuario anuladoPor;
+
+    @Column(name = "motivo_anulacion", columnDefinition = "TEXT")
+    private String motivoAnulacion;
 }

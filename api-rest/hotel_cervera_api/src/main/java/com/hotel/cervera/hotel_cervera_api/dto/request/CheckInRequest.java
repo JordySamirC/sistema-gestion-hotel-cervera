@@ -16,5 +16,5 @@ public class CheckInRequest {
     @NotNull(message = "La reserva es obligatoria")
     private UUID reservaId;
 
-    private OffsetDateTime fechaCheckIn;
+    private OffsetDateTime fechaIngreso;
 }

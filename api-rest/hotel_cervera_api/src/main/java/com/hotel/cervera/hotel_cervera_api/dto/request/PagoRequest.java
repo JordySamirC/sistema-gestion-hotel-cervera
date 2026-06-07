@@ -19,10 +19,6 @@ public class PagoRequest {
     @NotNull(message = "La estadía es obligatoria")
     private UUID estadiaId;
 
-    @NotBlank(message = "El número de comprobante es obligatorio")
-    @Size(max = 20)
-    private String comprobanteNumero;
-
     @NotNull(message = "El monto total es obligatorio")
     private BigDecimal montoTotal;
 
@@ -31,18 +27,34 @@ public class PagoRequest {
     private String metodoPago;
 
     @NotBlank(message = "El tipo de comprobante es obligatorio")
-    @Size(max = 3)
-    private String tipoComprobante;
+    @Size(max = 20)
+    private String tipoComprobante; // 'BOLETA', 'FACTURA'
 
     @NotBlank(message = "La serie es obligatoria")
-    @Size(max = 10)
+    @Size(max = 20)
     private String serie;
 
-    @NotNull(message = "El número es obligatorio")
-    private Integer numero;
-
+    // Datos del cliente
     @Size(max = 100)
-    private String rucRazonSocial;
+    private String clienteNombre;
+
+    @Size(max = 20)
+    private String clienteTipoDocumento;
+
+    @Size(max = 20)
+    private String clienteDocumento;
+
+    @Size(max = 11)
+    private String clienteRuc;
+
+    @Size(max = 200)
+    private String clienteRazonSocial;
+
+    // Pago
+    @Size(max = 100)
+    private String referenciaPago;
+
+    private String observaciones;
 
     @NotNull(message = "El monto neto es obligatorio")
     @PositiveOrZero
@@ -51,4 +63,13 @@ public class PagoRequest {
     @NotNull
     @PositiveOrZero
     private BigDecimal igv;
+
+    private UUID creadoPor;
+
+    // Campos para trazabilidad de grupos
+    private String modoPago; // 'CONSOLIDADO', 'INDIVIDUAL'
+    private String descripcionHabitaciones;
+    private Integer cantidadHabitaciones;
+    private UUID grupoId;
+    private java.util.List<UUID> estadiaIds;
 }

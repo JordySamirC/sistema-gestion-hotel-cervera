@@ -41,6 +41,7 @@ public class SecurityConfig {
 
                 // Admin-only (gerente)
                 .requestMatchers("/api/roles/**").hasRole("gerente")
+                .requestMatchers(HttpMethod.GET, "/api/precios-historicos/**").authenticated()
                 .requestMatchers("/api/precios-historicos/**").hasRole("gerente")
                 .requestMatchers("/api/usuarios/**").hasRole("gerente")
                 .requestMatchers("/api/gastos/**").hasRole("gerente")

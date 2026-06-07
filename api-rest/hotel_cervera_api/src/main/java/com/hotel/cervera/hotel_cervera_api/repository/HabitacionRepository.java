@@ -24,14 +24,14 @@ public interface HabitacionRepository extends JpaRepository<Habitacion, UUID> {
 
     List<Habitacion> findByEstadoActual(String estadoActual);
 
-    @Query("SELECT h FROM Habitacion h WHERE h.estadoActual = 'disponible' OR h.estadoActual = 'por_limpiar'")
+    @Query("SELECT h FROM Habitacion h WHERE h.estadoActual = 'Disponible' OR h.estadoActual = 'Por limpiar'")
     List<Habitacion> findDisponiblesYPendientes();
 
     @Query("SELECT h FROM Habitacion h WHERE h.id NOT IN (" +
            "SELECT rd.habitacion.id FROM ReservaDetalle rd " +
            "JOIN rd.reserva r WHERE r.estado IN ('pendiente', 'checked_in') " +
            "AND r.fechaIngreso <= :fechaSalida AND r.fechaSalida >= :fechaIngreso" +
-           ") AND h.estadoActual IN ('disponible', 'por_limpiar')")
+           ") AND h.estadoActual IN ('Disponible', 'Por limpiar')")
     List<Habitacion> findDisponiblesEnRango(@Param("fechaIngreso") LocalDate fechaIngreso,
                                              @Param("fechaSalida") LocalDate fechaSalida);
 

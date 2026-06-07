@@ -28,5 +28,5 @@ public class PrecioHistoricoRequest {
     private LocalDate fechaFin;
 
     @NotNull(message = "El usuario creador es obligatorio")
-    private UUID createdBy;
+    private UUID creadoPor;
 }

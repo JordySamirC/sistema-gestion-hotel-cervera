@@ -32,10 +32,10 @@ public class PrecioHistorico {
     private LocalDate fechaFin;
 
     @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private OffsetDateTime createdAt;
+    @Column(name = "fecha_creacion", updatable = false)
+    private OffsetDateTime fechaCreacion;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by", nullable = false)
-    private Usuario createdBy;
+    @JoinColumn(name = "creado_por", nullable = false)
+    private Usuario creadoPor;
 }

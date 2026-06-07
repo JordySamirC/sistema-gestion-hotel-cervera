@@ -84,6 +84,20 @@ public class EstadiaController {
     public ResponseEntity<EstadiaResponse> checkOut(@PathVariable UUID id,
                                                      @RequestBody(required = false) CheckOutRequest request) {
         return ResponseEntity.ok(estadiaService.checkOut(id,
-                request != null ? request.getFechaCheckOut() : null));
+                request != null ? request.getFechaSalida() : null));
+    }
+
+    @PostMapping("/grupo/{grupoId}/check-out")
+    @Operation(summary = "Registrar check-out grupal", description = "Registra el pago y salida de todas las estadías activas de un grupo")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Check-out grupal exitoso"),
+        @ApiResponse(responseCode = "400", description = "Datos de pago inválidos"),
+        @ApiResponse(responseCode = "404", description = "Grupo no encontrado o sin estadías activas")
+    })
+    public ResponseEntity<List<EstadiaResponse>> checkOutGrupo(
+            @PathVariable UUID grupoId,
+            @Valid @RequestBody com.hotel.cervera.hotel_cervera_api.dto.request.PagoGrupoRequest request) {
+        request.setGrupoId(grupoId);
+        return ResponseEntity.ok(estadiaService.checkOutGrupo(request));
     }
 }

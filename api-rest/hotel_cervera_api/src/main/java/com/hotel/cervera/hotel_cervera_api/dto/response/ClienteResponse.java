@@ -23,9 +23,9 @@ public class ClienteResponse {
     private String genero;
     private String estado;
     private String telefono;
-    private String email;
+    private String correoElectronico;
     private Integer vecesHospedado;
     private LocalDate fechaNacimiento;
-    private OffsetDateTime createdAt;
-    private OffsetDateTime updatedAt;
+    private OffsetDateTime fechaCreacion;
+    private OffsetDateTime fechaActualizacion;
 }

@@ -21,6 +21,6 @@ public class HabitacionResponse {
     private Integer capacidadMax;
     private String estadoActual;
     private String notas;
-    private OffsetDateTime createdAt;
-    private OffsetDateTime updatedAt;
+    private OffsetDateTime fechaCreacion;
+    private OffsetDateTime fechaActualizacion;
 }

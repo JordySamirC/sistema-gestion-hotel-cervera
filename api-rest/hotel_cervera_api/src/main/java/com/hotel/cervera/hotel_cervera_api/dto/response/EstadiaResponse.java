@@ -17,11 +17,11 @@ public class EstadiaResponse {
     private UUID id;
     private UUID reservaId;
     private String reservaCodigo;
-    private OffsetDateTime fechaCheckIn;
-    private OffsetDateTime fechaCheckOut;
+    private OffsetDateTime fechaIngreso;
+    private OffsetDateTime fechaSalida;
     private Integer noches;
     private BigDecimal montoTotal;
     private String estado;
-    private OffsetDateTime createdAt;
-    private OffsetDateTime updatedAt;
+    private OffsetDateTime fechaCreacion;
+    private OffsetDateTime fechaActualizacion;
 }

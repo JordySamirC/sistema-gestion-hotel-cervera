@@ -19,5 +19,5 @@ public class ReservaHuespedResponse {
     private String clienteNombre;
     private String clienteDocumento;
     private Boolean esTitular;
-    private OffsetDateTime createdAt;
+    private OffsetDateTime fechaCreacion;
 }

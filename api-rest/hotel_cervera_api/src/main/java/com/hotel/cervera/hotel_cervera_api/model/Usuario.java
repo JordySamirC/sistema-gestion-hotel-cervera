@@ -20,8 +20,8 @@ public class Usuario {
     @Column(name = "nombre_usuario", nullable = false, unique = true, length = 50)
     private String nombreUsuario;
 
-    @Column(name = "email", nullable = false, unique = true, length = 100)
-    private String email;
+    @Column(name = "correo_electronico", nullable = false, unique = true, length = 100)
+    private String correoElectronico;
 
     @Column(name = "contrasena_hash", nullable = false, length = 255)
     private String contrasenaHash;
@@ -49,13 +49,13 @@ public class Usuario {
     private OffsetDateTime bloqueadoHasta;
 
     @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private OffsetDateTime createdAt;
+    @Column(name = "fecha_creacion", updatable = false)
+    private OffsetDateTime fechaCreacion;
 
     @UpdateTimestamp
-    @Column(name = "updated_at")
-    private OffsetDateTime updatedAt;
+    @Column(name = "fecha_actualizacion")
+    private OffsetDateTime fechaActualizacion;
 
-    @Column(name = "deleted_at")
-    private OffsetDateTime deletedAt;
+    @Column(name = "fecha_eliminacion")
+    private OffsetDateTime fechaEliminacion;
 }

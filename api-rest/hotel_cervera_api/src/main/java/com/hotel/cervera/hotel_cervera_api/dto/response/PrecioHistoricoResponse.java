@@ -21,6 +21,6 @@ public class PrecioHistoricoResponse {
     private BigDecimal precioNoche;
     private LocalDate fechaInicio;
     private LocalDate fechaFin;
-    private OffsetDateTime createdAt;
-    private UUID createdBy;
+    private OffsetDateTime fechaCreacion;
+    private UUID creadoPor;
 }

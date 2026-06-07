@@ -8,6 +8,8 @@ import com.hotel.cervera.hotel_cervera_api.model.Habitacion;
 import com.hotel.cervera.hotel_cervera_api.model.TipoHabitacion;
 import com.hotel.cervera.hotel_cervera_api.repository.HabitacionRepository;
 import com.hotel.cervera.hotel_cervera_api.repository.TipoHabitacionRepository;
+import com.hotel.cervera.hotel_cervera_api.model.HabitacionHistorial;
+import com.hotel.cervera.hotel_cervera_api.repository.HabitacionHistorialRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,9 +24,11 @@ public class HabitacionService {
 
     private final HabitacionRepository habitacionRepository;
     private final TipoHabitacionRepository tipoHabitacionRepository;
+    private final HabitacionHistorialRepository habitacionHistorialRepository;
 
     public List<HabitacionResponse> findAll() {
-        return habitacionRepository.findAll().stream().map(this::toResponse).toList();
+        return habitacionRepository.findAll().stream()
+                .map(this::toResponse).toList();
     }
 
     public HabitacionResponse findById(UUID id) {
@@ -37,13 +41,15 @@ public class HabitacionService {
     }
 
     public List<HabitacionResponse> findByEstado(String estado) {
-        return habitacionRepository.findByEstadoActual(estado).stream().map(this::toResponse).toList();
+        return habitacionRepository.findByEstadoActual(estado).stream()
+                .map(this::toResponse).toList();
     }
 
     public List<HabitacionResponse> findDisponiblesEnRango(java.time.LocalDate fechaIngreso,
                                                             java.time.LocalDate fechaSalida) {
         return habitacionRepository.findDisponiblesEnRango(fechaIngreso, fechaSalida)
-                .stream().map(this::toResponse).toList();
+                .stream()
+                .map(this::toResponse).toList();
     }
 
     @Transactional
@@ -58,34 +64,73 @@ public class HabitacionService {
                 .numero(request.getNumero())
                 .piso(request.getPiso())
                 .tipo(tipo)
-                .estadoActual("disponible")
+                .estadoActual("Disponible")
                 .notas(request.getNotas())
                 .build();
         return toResponse(habitacionRepository.save(entity));
     }
 
     @Transactional
-    public HabitacionResponse update(UUID id, HabitacionRequest request) {
+    public HabitacionResponse update(UUID id, HabitacionRequest request, UUID usuarioId) {
+
         Habitacion entity = habitacionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Habitación", id));
+
         if (!entity.getNumero().equals(request.getNumero())
                 && habitacionRepository.existsByNumero(request.getNumero())) {
             throw new BusinessException("Ya existe una habitación con el número: " + request.getNumero());
         }
+
         TipoHabitacion tipo = tipoHabitacionRepository.findById(request.getTipoId())
                 .orElseThrow(() -> new ResourceNotFoundException("Tipo de habitación", request.getTipoId()));
+
+        // Auditoría
+        if (!entity.getNumero().equals(request.getNumero())) {
+            registrarHistorial(id, "numero", entity.getNumero(), request.getNumero(), usuarioId);
+        }
+        if (!entity.getPiso().equals(request.getPiso())) {
+            registrarHistorial(id, "piso", String.valueOf(entity.getPiso()), String.valueOf(request.getPiso()), usuarioId);
+        }
+        if (!entity.getTipo().getId().equals(request.getTipoId())) {
+            registrarHistorial(id, "tipo", entity.getTipo().getNombre(), tipo.getNombre(), usuarioId);
+        }
+        if (request.getNotas() != null && !request.getNotas().equals(entity.getNotas())) {
+            registrarHistorial(id, "notas", entity.getNotas(), request.getNotas(), usuarioId);
+        }
+
+        // Cambio de estado
+        if (request.getEstado() != null && !entity.getEstadoActual().equals(request.getEstado())) {
+            Set<String> estadosGerente = Set.of("Disponible", "Mantenimiento", "Remodelación", "Inhabitable");
+            if (!estadosGerente.contains(request.getEstado())) {
+                throw new BusinessException("Solo se puede cambiar el estado a Disponible, Mantenimiento, Remodelación o Inhabitable");
+            }
+            registrarHistorial(id, "estado", entity.getEstadoActual(), request.getEstado(), usuarioId);
+            entity.setEstadoActual(request.getEstado());
+        }
 
         entity.setNumero(request.getNumero());
         entity.setPiso(request.getPiso());
         entity.setTipo(tipo);
         entity.setNotas(request.getNotas());
+
         return toResponse(habitacionRepository.save(entity));
+    }
+
+    private void registrarHistorial(UUID habitacionId, String campo, String valorAnterior, String valorNuevo, UUID usuarioId) {
+        HabitacionHistorial historial = HabitacionHistorial.builder()
+                .habitacionId(habitacionId)
+                .campo(campo)
+                .valorAnterior(valorAnterior)
+                .valorNuevo(valorNuevo)
+                .modificadoPor(usuarioId)
+                .build();
+        habitacionHistorialRepository.save(historial);
     }
 
     @Transactional
     public HabitacionResponse cambiarEstado(UUID id, String nuevoEstado) {
-        Set<String> estadosValidos = Set.of("disponible", "ocupada", "por_limpiar",
-                "en_limpieza", "mantenimiento", "remodelacion", "inabitable");
+        Set<String> estadosValidos = Set.of("Disponible", "Ocupada", "Por limpiar",
+                "En limpieza", "Mantenimiento", "Remodelación", "Inhabitable");
         if (!estadosValidos.contains(nuevoEstado)) {
             throw new BusinessException("Estado inválido: " + nuevoEstado);
         }
@@ -113,8 +158,8 @@ public class HabitacionService {
                 .capacidadMax(entity.getTipo().getCapacidadMax())
                 .estadoActual(entity.getEstadoActual())
                 .notas(entity.getNotas())
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
+                .fechaCreacion(entity.getFechaCreacion())
+                .fechaActualizacion(entity.getFechaActualizacion())
                 .build();
     }
 }

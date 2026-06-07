@@ -15,20 +15,20 @@ public interface UsuarioRepository extends JpaRepository<Usuario, UUID> {
 
     Optional<Usuario> findByNombreUsuario(String nombreUsuario);
 
-    Optional<Usuario> findByEmail(String email);
+    Optional<Usuario> findByCorreoElectronico(String correoElectronico);
 
     boolean existsByNombreUsuario(String nombreUsuario);
 
-    boolean existsByEmail(String email);
+    boolean existsByCorreoElectronico(String correoElectronico);
 
-    @Query("SELECT u FROM Usuario u WHERE u.deletedAt IS NULL")
+    @Query("SELECT u FROM Usuario u WHERE u.fechaEliminacion IS NULL")
     List<Usuario> findAllActive();
 
-    @Query("SELECT u FROM Usuario u WHERE u.deletedAt IS NULL AND u.id = :id")
+    @Query("SELECT u FROM Usuario u WHERE u.fechaEliminacion IS NULL AND u.id = :id")
     Optional<Usuario> findActiveById(@Param("id") UUID id);
 
-    @Query("SELECT u FROM Usuario u WHERE u.deletedAt IS NULL AND u.email = :email")
-    Optional<Usuario> findActiveByEmail(@Param("email") String email);
+    @Query("SELECT u FROM Usuario u WHERE u.fechaEliminacion IS NULL AND u.correoElectronico = :correoElectronico")
+    Optional<Usuario> findActiveByCorreoElectronico(@Param("correoElectronico") String correoElectronico);
 
     List<Usuario> findByRolId(UUID rolId);
 }

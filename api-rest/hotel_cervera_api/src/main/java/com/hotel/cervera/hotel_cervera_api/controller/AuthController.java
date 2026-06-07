@@ -69,7 +69,7 @@ public class AuthController {
     @Operation(summary = "Solicitar restablecimiento de contraseña",
                description = "Envía un magic link al correo si está registrado. Siempre devuelve el mismo mensaje genérico (seguridad NIST).")
     public ResponseEntity<Map<String, String>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
-        Optional<Usuario> userOptional = usuarioRepository.findByEmail(request.getEmail());
+        Optional<Usuario> userOptional = usuarioRepository.findByCorreoElectronico(request.getCorreoElectronico());
 
         if (userOptional.isPresent()) {
             Usuario user = userOptional.get();
@@ -78,7 +78,7 @@ public class AuthController {
             String tokenHash = hashToken(rawToken);
 
             PasswordResetToken resetToken = PasswordResetToken.builder()
-                    .email(user.getEmail())
+                    .email(user.getCorreoElectronico())
                     .tokenHash(tokenHash)
                     .expiresAt(LocalDateTime.now().plusHours(1))
                     .used(false)
@@ -88,10 +88,10 @@ public class AuthController {
             String magicLink = appBaseUrl + "/reset-password?token=" + rawToken;
 
             try {
-                emailService.sendMagicLink(user.getEmail(), magicLink);
-                log.info("Magic link sent to masked email: {}", maskEmail(user.getEmail()));
+                emailService.sendMagicLink(user.getCorreoElectronico(), magicLink);
+                log.info("Magic link sent to masked email: {}", maskEmail(user.getCorreoElectronico()));
             } catch (Exception e) {
-                log.error("Failed to send magic link email to {}: {}", maskEmail(user.getEmail()), e.getMessage());
+                log.error("Failed to send magic link email to {}: {}", maskEmail(user.getCorreoElectronico()), e.getMessage());
             }
         } else {
             log.info("Forgot password requested for non-existent email (silent)");
@@ -123,7 +123,7 @@ public class AuthController {
             throw new BusinessException("Este enlace ya ha sido utilizado. Solicita un nuevo restablecimiento.");
         }
 
-        Usuario user = usuarioRepository.findByEmail(resetToken.getEmail())
+        Usuario user = usuarioRepository.findByCorreoElectronico(resetToken.getEmail())
                 .orElseThrow(() -> new BusinessException("Usuario no encontrado."));
 
         user.setContrasenaHash(passwordEncoder.encode(request.getNewPassword()));
@@ -160,16 +160,16 @@ public class AuthController {
         List<Map<String, Object>> usuarios = new ArrayList<>();
         try (Connection conn = dataSource.getConnection();
              Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(
-                 "SELECT u.id, u.nombre_usuario, u.estado, u.email, r.nombre AS rol " +
-                 "FROM usuarios u JOIN roles r ON r.id = u.rol_id " +
-                 "ORDER BY u.nombre_usuario")) {
+              ResultSet rs = stmt.executeQuery(
+                  "SELECT u.id, u.nombre_usuario, u.estado, u.correo_electronico, r.nombre AS rol " +
+                  "FROM usuarios u JOIN roles r ON r.id = u.rol_id " +
+                  "ORDER BY u.nombre_usuario")) {
             while (rs.next()) {
                 Map<String, Object> u = new LinkedHashMap<>();
                 u.put("id", rs.getString("id"));
                 u.put("nombre_usuario", rs.getString("nombre_usuario"));
                 u.put("estado", rs.getString("estado"));
-                u.put("email", rs.getString("email"));
+                u.put("correoElectronico", rs.getString("correo_electronico"));
                 u.put("rol", rs.getString("rol"));
                 usuarios.add(u);
             }

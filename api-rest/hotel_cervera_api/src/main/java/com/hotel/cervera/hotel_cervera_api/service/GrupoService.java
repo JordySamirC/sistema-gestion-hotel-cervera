@@ -1,6 +1,8 @@
 package com.hotel.cervera.hotel_cervera_api.service;
 
 import com.hotel.cervera.hotel_cervera_api.dto.request.AddHabitacionRequest;
+import com.hotel.cervera.hotel_cervera_api.dto.request.CancelarGrupoRequest;
+import com.hotel.cervera.hotel_cervera_api.dto.request.ExtenderGrupoRequest;
 import com.hotel.cervera.hotel_cervera_api.dto.request.GrupoRequest;
 import com.hotel.cervera.hotel_cervera_api.dto.request.GrupoUpdateRequest;
 import com.hotel.cervera.hotel_cervera_api.dto.request.HuespedRequest;
@@ -18,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -52,24 +55,44 @@ public class GrupoService {
         Grupo grupo = grupoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Grupo", id));
 
-        if (request.getNombreGrupo() != null) grupo.setNombreGrupo(request.getNombreGrupo());
+        if (request.getNombreGrupo() != null)
+            grupo.setNombreGrupo(request.getNombreGrupo());
         if (request.getResponsablePagoId() != null) {
             Cliente responsable = clienteRepository.findById(request.getResponsablePagoId())
                     .orElseThrow(() -> new ResourceNotFoundException("Cliente", request.getResponsablePagoId()));
             grupo.setResponsablePago(responsable);
         }
-        if (request.getFechaIngreso() != null) {
-            if (request.getFechaSalida() != null && !request.getFechaSalida().isAfter(request.getFechaIngreso())) {
-                throw new BusinessException("La fecha de salida debe ser posterior a la fecha de ingreso");
-            }
-            grupo.setFechaIngreso(request.getFechaIngreso());
+
+        LocalDate nuevaFechaIngreso = request.getFechaIngreso() != null ? request.getFechaIngreso() : grupo.getFechaIngreso();
+        LocalDate nuevaFechaSalida = request.getFechaSalida() != null ? request.getFechaSalida() : grupo.getFechaSalida();
+
+        if (!nuevaFechaSalida.isAfter(nuevaFechaIngreso)) {
+            throw new BusinessException("La fecha de salida debe ser posterior a la fecha de ingreso");
         }
-        if (request.getFechaSalida() != null) {
-            if (!request.getFechaSalida().isAfter(grupo.getFechaIngreso())) {
-                throw new BusinessException("La fecha de salida debe ser posterior a la fecha de ingreso");
+
+        boolean fechasCambiaron = !nuevaFechaIngreso.equals(grupo.getFechaIngreso())
+                || !nuevaFechaSalida.equals(grupo.getFechaSalida());
+
+        if (fechasCambiaron) {
+            List<Reserva> hijas = reservaRepository.findByGrupoId(id);
+            for (Reserva hija : hijas) {
+                if (!"RESERVADA".equals(hija.getEstado())) continue;
+                for (ReservaDetalle detalle : hija.getDetalles()) {
+                    boolean disponible = reservaRepository.isHabitacionDisponibleParaReserva(
+                            detalle.getHabitacion().getId(), nuevaFechaIngreso, nuevaFechaSalida, hija.getId());
+                    if (!disponible) {
+                        throw new BusinessException("La habitación " + detalle.getHabitacion().getNumero()
+                                + " no está disponible en las nuevas fechas del grupo");
+                    }
+                }
+                hija.setFechaIngreso(nuevaFechaIngreso);
+                hija.setFechaSalida(nuevaFechaSalida);
+                reservaRepository.save(hija);
             }
-            grupo.setFechaSalida(request.getFechaSalida());
+            grupo.setFechaIngreso(nuevaFechaIngreso);
+            grupo.setFechaSalida(nuevaFechaSalida);
         }
+
         if (request.getFacturarTodoAlResponsable() != null) {
             grupo.setFacturarTodoAlResponsable(request.getFacturarTodoAlResponsable());
         }
@@ -78,7 +101,8 @@ public class GrupoService {
                     .orElseThrow(() -> new ResourceNotFoundException("Canal de venta no válido"));
             grupo.setCanalVenta(canal);
         }
-        if (request.getCanalVentaOtro() != null) grupo.setCanalVentaOtro(request.getCanalVentaOtro());
+        if (request.getCanalVentaOtro() != null)
+            grupo.setCanalVentaOtro(request.getCanalVentaOtro());
 
         grupo = grupoRepository.save(grupo);
         return toResponse(grupo);
@@ -89,7 +113,7 @@ public class GrupoService {
         Grupo grupo = grupoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Grupo", id));
         List<Reserva> reservas = reservaRepository.findByGrupoId(id);
-        boolean hasActivas = reservas.stream().anyMatch(r -> !"cancelada".equals(r.getEstado()));
+        boolean hasActivas = reservas.stream().anyMatch(r -> !"CANCELADA".equals(r.getEstado()));
         if (hasActivas) {
             throw new BusinessException("No se puede eliminar un grupo con reservas activas");
         }
@@ -129,11 +153,74 @@ public class GrupoService {
                 .findFirst()
                 .orElseThrow(() -> new BusinessException("La habitación no está asignada a este grupo"));
 
-        target.setEstado("cancelada");
+        target.setEstado("CANCELADA");
         target.setMotivoCancelacion("Eliminada del grupo");
         reservaRepository.save(target);
 
         return toResponse(grupoRepository.findById(grupo.getId()).orElseThrow());
+    }
+
+    @Transactional
+    public GrupoResponse cancelarGrupo(UUID id, CancelarGrupoRequest request, UUID usuarioId) {
+        Grupo grupo = grupoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Grupo", id));
+
+        Usuario canceladoPor = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario", usuarioId));
+
+        List<Reserva> hijas = reservaRepository.findByGrupoId(id);
+        boolean algunaCancelada = false;
+
+        for (Reserva hija : hijas) {
+            if (!"RESERVADA".equals(hija.getEstado())) continue;
+            hija.setEstado("CANCELADA");
+            hija.setMotivoCancelacion(request.getMotivoCancelacion());
+            hija.setObservacionesCancelacion(request.getObservaciones());
+            hija.setFechaCancelacion(LocalDateTime.now());
+            hija.setCanceladoPor(canceladoPor);
+            reservaRepository.save(hija);
+            algunaCancelada = true;
+        }
+
+        if (!algunaCancelada) {
+            throw new BusinessException("No hay reservas en estado RESERVADA para cancelar en este grupo");
+        }
+
+        return toResponse(grupoRepository.findById(id).orElseThrow());
+    }
+
+    @Transactional
+    public GrupoResponse extenderGrupo(UUID id, ExtenderGrupoRequest request) {
+        Grupo grupo = grupoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Grupo", id));
+
+        LocalDate nuevaFechaSalida = request.getNuevaFechaSalida();
+
+        if (!nuevaFechaSalida.isAfter(grupo.getFechaSalida())) {
+            throw new BusinessException("La nueva fecha de salida debe ser posterior a la actual");
+        }
+
+        List<Reserva> hijas = reservaRepository.findByGrupoId(id);
+        for (Reserva hija : hijas) {
+            String estado = hija.getEstado();
+            if ("CANCELADA".equals(estado) || "FINALIZADO".equals(estado)) continue;
+
+            for (ReservaDetalle detalle : hija.getDetalles()) {
+                boolean disponible = reservaRepository.isHabitacionDisponibleParaReserva(
+                        detalle.getHabitacion().getId(), hija.getFechaIngreso(), nuevaFechaSalida, hija.getId());
+                if (!disponible) {
+                    throw new BusinessException("La habitación " + detalle.getHabitacion().getNumero()
+                            + " no está disponible para extender hasta la fecha solicitada");
+                }
+            }
+            hija.setFechaSalida(nuevaFechaSalida);
+            reservaRepository.save(hija);
+        }
+
+        grupo.setFechaSalida(nuevaFechaSalida);
+        grupo = grupoRepository.save(grupo);
+
+        return toResponse(grupo);
     }
 
     @Transactional
@@ -157,7 +244,8 @@ public class GrupoService {
                 .fechaIngreso(request.getFechaIngreso())
                 .fechaSalida(request.getFechaSalida())
                 .facturarTodoAlResponsable(request.getFacturarTodoAlResponsable() != null
-                        ? request.getFacturarTodoAlResponsable() : true)
+                        ? request.getFacturarTodoAlResponsable()
+                        : true)
                 .canalVenta(canal)
                 .canalVentaOtro(request.getCanalVentaOtro())
                 .creadoPor(creadoPor)
@@ -186,7 +274,7 @@ public class GrupoService {
                 .fechaSalida(grupo.getFechaSalida())
                 .cliente(grupo.getResponsablePago())
                 .grupo(grupo)
-                .estado("pendiente")
+                .estado("RESERVADA")
                 .creadoPor(creadoPor)
                 .adultos(req.getAdultos() != null ? req.getAdultos() : 1)
                 .ninos(req.getNinos() != null ? req.getNinos() : 0)
@@ -220,16 +308,16 @@ public class GrupoService {
                     + " (" + habitacion.getTipo().getNombre() + ") tiene capacidad máxima de "
                     + habitacion.getTipo().getCapacidadMax() + " personas");
         }
-            for (HuespedRequest hReq : req.getHuespedes()) {
-                Cliente huesped = clienteRepository.findById(hReq.getClienteId())
-                        .orElseThrow(() -> new ResourceNotFoundException("Cliente", hReq.getClienteId()));
-                ReservaHuesped rh = ReservaHuesped.builder()
-                        .reserva(reserva)
-                        .cliente(huesped)
-                        .esTitular(hReq.getEsTitular() != null && hReq.getEsTitular())
-                        .build();
-                huespedRepository.save(rh);
-            }
+        for (HuespedRequest hReq : req.getHuespedes()) {
+            Cliente huesped = clienteRepository.findById(hReq.getClienteId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Cliente", hReq.getClienteId()));
+            ReservaHuesped rh = ReservaHuesped.builder()
+                    .reserva(reserva)
+                    .cliente(huesped)
+                    .esTitular(hReq.getEsTitular() != null && hReq.getEsTitular())
+                    .build();
+            huespedRepository.save(rh);
+        }
     }
 
     public List<ReservaHuespedResponse> getHuespedes(UUID reservaId) {
@@ -239,9 +327,10 @@ public class GrupoService {
                         .reservaId(h.getReserva().getId())
                         .clienteId(h.getCliente().getId())
                         .clienteNombre(h.getCliente().getNombres() + " " + h.getCliente().getApellidos())
-                        .clienteDocumento(h.getCliente().getTipoDocumento() + ": " + h.getCliente().getNumeroDocumento())
+                        .clienteDocumento(
+                                h.getCliente().getTipoDocumento() + ": " + h.getCliente().getNumeroDocumento())
                         .esTitular(h.getEsTitular())
-                        .createdAt(h.getCreatedAt())
+                        .fechaCreacion(h.getFechaCreacion())
                         .build())
                 .toList();
     }
@@ -251,6 +340,23 @@ public class GrupoService {
         if (!disponible) {
             throw new BusinessException("La habitación no está disponible en las fechas seleccionadas");
         }
+    }
+
+    private String calcularEstadoGrupo(List<ReservaResponse> reservas) {
+        if (reservas == null || reservas.isEmpty()) return "CANCELADO";
+
+        long total = reservas.size();
+        long canceladas = reservas.stream().filter(r -> "CANCELADA".equals(r.getEstado())).count();
+        long finalizados = reservas.stream().filter(r -> "FINALIZADO".equals(r.getEstado())).count();
+        long hospedados = reservas.stream().filter(r -> "HOSPEDADO".equals(r.getEstado())).count();
+        long reservadas = reservas.stream().filter(r -> "RESERVADA".equals(r.getEstado())).count();
+
+        if (canceladas == total) return "CANCELADO";
+        if (hospedados > 0) return "ACTIVO";
+        if (finalizados == total) return "FINALIZADO";
+        if (reservadas == total) return "RESERVADA";
+        if (reservadas > 0 && canceladas > 0) return "RESERVADA";
+        return "RESERVADA";
     }
 
     private String generarCodigoReserva() {
@@ -271,9 +377,10 @@ public class GrupoService {
                                     .reservaId(h.getReserva().getId())
                                     .clienteId(h.getCliente().getId())
                                     .clienteNombre(h.getCliente().getNombres() + " " + h.getCliente().getApellidos())
-                                    .clienteDocumento(h.getCliente().getTipoDocumento() + ": " + h.getCliente().getNumeroDocumento())
+                                    .clienteDocumento(h.getCliente().getTipoDocumento() + ": "
+                                            + h.getCliente().getNumeroDocumento())
                                     .esTitular(h.getEsTitular())
-                                    .createdAt(h.getCreatedAt())
+                                    .fechaCreacion(h.getFechaCreacion())
                                     .build())
                             .toList();
                     return ReservaResponse.builder()
@@ -295,21 +402,22 @@ public class GrupoService {
                             .creadoPor(r.getCreadoPor().getId())
                             .creadoPorNombre(r.getCreadoPor().getNombres() + " " + r.getCreadoPor().getApellidos())
                             .adultos(r.getAdultos())
-                .ninos(r.getNinos())
-                .canalVentaNombre(r.getCanalVenta().getNombre())
+                            .ninos(r.getNinos())
+                            .canalVentaNombre(r.getCanalVenta().getNombre())
                             .canalVentaIcono(r.getCanalVenta().getIcono())
                             .canalVentaOtro(r.getCanalVentaOtro())
 
-                            .createdAt(r.getCreatedAt())
-                            .updatedAt(r.getUpdatedAt())
+                            .fechaCreacion(r.getFechaCreacion())
+                            .fechaActualizacion(r.getFechaActualizacion())
                             .detalles(r.getDetalles().stream()
-                                    .map(d -> com.hotel.cervera.hotel_cervera_api.dto.response.ReservaDetalleResponse.builder()
+                                    .map(d -> com.hotel.cervera.hotel_cervera_api.dto.response.ReservaDetalleResponse
+                                            .builder()
                                             .id(d.getId())
                                             .reservaId(d.getReserva().getId())
                                             .habitacionId(d.getHabitacion().getId())
                                             .habitacionNumero(d.getHabitacion().getNumero())
                                             .precioAplicado(d.getPrecioAplicado())
-                                            .createdAt(d.getCreatedAt())
+                                            .fechaCreacion(d.getFechaCreacion())
                                             .build())
                                     .toList())
                             .grupoId(r.getGrupo() != null ? r.getGrupo().getId() : null)
@@ -319,11 +427,14 @@ public class GrupoService {
                 })
                 .toList();
 
+        String estadoGrupo = calcularEstadoGrupo(reservas);
+
         return GrupoResponse.builder()
                 .id(grupo.getId())
                 .nombreGrupo(grupo.getNombreGrupo())
                 .responsablePagoId(grupo.getResponsablePago().getId())
-                .responsablePagoNombre(grupo.getResponsablePago().getNombres() + " " + grupo.getResponsablePago().getApellidos())
+                .responsablePagoNombre(
+                        grupo.getResponsablePago().getNombres() + " " + grupo.getResponsablePago().getApellidos())
                 .fechaIngreso(grupo.getFechaIngreso())
                 .fechaSalida(grupo.getFechaSalida())
                 .facturarTodoAlResponsable(grupo.getFacturarTodoAlResponsable())
@@ -332,8 +443,9 @@ public class GrupoService {
                 .canalVentaOtro(grupo.getCanalVentaOtro())
                 .creadoPor(grupo.getCreadoPor().getId())
                 .creadoPorNombre(grupo.getCreadoPor().getNombres() + " " + grupo.getCreadoPor().getApellidos())
-                .createdAt(grupo.getCreatedAt())
-                .updatedAt(grupo.getUpdatedAt())
+                .fechaCreacion(grupo.getFechaCreacion())
+                .fechaActualizacion(grupo.getFechaActualizacion())
+                .estado(estadoGrupo)
                 .reservas(reservas)
                 .build();
     }

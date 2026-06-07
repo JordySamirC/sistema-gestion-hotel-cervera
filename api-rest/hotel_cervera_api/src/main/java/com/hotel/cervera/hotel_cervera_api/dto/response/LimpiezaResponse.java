@@ -21,5 +21,5 @@ public class LimpiezaResponse {
     private OffsetDateTime fechaInicio;
     private OffsetDateTime fechaFin;
     private Integer duracionSegundos;
-    private OffsetDateTime createdAt;
+    private OffsetDateTime fechaCreacion;
 }

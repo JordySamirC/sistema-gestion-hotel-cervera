@@ -27,7 +27,8 @@ public class GrupoResponse {
     private String canalVentaOtro;
     private UUID creadoPor;
     private String creadoPorNombre;
-    private OffsetDateTime createdAt;
-    private OffsetDateTime updatedAt;
+    private OffsetDateTime fechaCreacion;
+    private OffsetDateTime fechaActualizacion;
+    private String estado;
     private List<ReservaResponse> reservas;
 }

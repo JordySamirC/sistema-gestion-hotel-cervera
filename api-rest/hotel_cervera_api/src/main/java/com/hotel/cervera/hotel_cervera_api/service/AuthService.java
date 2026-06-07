@@ -24,7 +24,7 @@ public class AuthService {
 
     @Transactional
     public LoginResponse login(LoginRequest request) {
-        Usuario usuario = usuarioRepository.findActiveByEmail(request.getEmail())
+        Usuario usuario = usuarioRepository.findActiveByCorreoElectronico(request.getCorreoElectronico())
                 .orElseThrow(() -> new UnauthorizedException("Credenciales inválidas"));
 
         if (!"activo".equals(usuario.getEstado())) {
@@ -48,7 +48,7 @@ public class AuthService {
 
         String token = jwtUtil.generateToken(
                 usuario.getId(),
-                usuario.getEmail(),
+                usuario.getCorreoElectronico(),
                 usuario.getRol().getNombre()
         );
 
@@ -57,7 +57,7 @@ public class AuthService {
                 .tipo("Bearer")
                 .id(usuario.getId())
                 .nombreUsuario(usuario.getNombreUsuario())
-                .email(usuario.getEmail())
+                .correoElectronico(usuario.getCorreoElectronico())
                 .nombres(usuario.getNombres())
                 .apellidos(usuario.getApellidos())
                 .rol(usuario.getRol().getNombre())

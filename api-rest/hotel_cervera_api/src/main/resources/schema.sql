@@ -1,3 +1,0 @@
-ALTER TABLE grupos ADD COLUMN IF NOT EXISTS creado_por UUID REFERENCES usuarios(id);
-ALTER TABLE reservas ADD COLUMN IF NOT EXISTS creado_por UUID REFERENCES usuarios(id);
-ALTER TABLE gastos ADD COLUMN IF NOT EXISTS creado_por UUID REFERENCES usuarios(id);

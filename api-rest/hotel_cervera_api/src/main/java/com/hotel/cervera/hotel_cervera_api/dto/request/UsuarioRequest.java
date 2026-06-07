@@ -19,10 +19,10 @@ public class UsuarioRequest {
     @Size(max = 50, message = "El nombre de usuario no debe exceder 50 caracteres")
     private String nombreUsuario;
 
-    @NotBlank(message = "El email es obligatorio")
-    @Email(message = "Email inválido")
+    @NotBlank(message = "El correo electrónico es obligatorio")
+    @Email(message = "Correo electrónico inválido")
     @Size(max = 100)
-    private String email;
+    private String correoElectronico;
 
     @NotBlank(message = "La contraseña es obligatoria")
     @Size(min = 6, message = "La contraseña debe tener al menos 6 caracteres")

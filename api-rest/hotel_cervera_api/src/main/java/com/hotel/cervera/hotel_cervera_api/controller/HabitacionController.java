@@ -76,8 +76,10 @@ public class HabitacionController {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Habitación no encontrada")
     })
     public ResponseEntity<HabitacionResponse> update(@PathVariable UUID id,
-                                                      @Valid @RequestBody HabitacionRequest request) {
-        return ResponseEntity.ok(habitacionService.update(id, request));
+                                                      @Valid @RequestBody HabitacionRequest request,
+                                                      org.springframework.security.core.Authentication authentication) {
+        UUID usuarioId = UUID.fromString(authentication.getName());
+        return ResponseEntity.ok(habitacionService.update(id, request, usuarioId));
     }
 
     @PatchMapping("/{id}/estado")

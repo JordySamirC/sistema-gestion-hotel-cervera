@@ -9,6 +9,7 @@ import java.util.UUID;
 
 @Repository
 public interface TipoHabitacionRepository extends JpaRepository<TipoHabitacion, UUID> {
+    Optional<TipoHabitacion> findByNombreIgnoreCase(String nombre);
     Optional<TipoHabitacion> findByNombre(String nombre);
     boolean existsByNombre(String nombre);
 }

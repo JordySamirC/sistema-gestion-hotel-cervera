@@ -22,6 +22,8 @@ public interface ReservaRepository extends JpaRepository<Reserva, UUID> {
 
     List<Reserva> findByEstado(String estado);
 
+    List<Reserva> findByEstadoAndFechaIngresoBefore(String estado, LocalDate fechaIngreso);
+
     List<Reserva> findByGrupoId(UUID grupoId);
 
     List<Reserva> findByGrupoIdIsNull();
@@ -43,10 +45,22 @@ public interface ReservaRepository extends JpaRepository<Reserva, UUID> {
     @Query("SELECT CASE WHEN COUNT(r) = 0 THEN true ELSE false END FROM Reserva r " +
            "JOIN r.detalles d " +
            "WHERE d.habitacion.id = :habitacionId " +
-           "AND r.estado NOT IN ('cancelada', 'no_show') " +
+           "AND UPPER(r.estado) NOT IN ('CANCELADA', 'CANCELADO') " +
            "AND r.fechaIngreso < :fechaSalida " +
            "AND r.fechaSalida > :fechaIngreso")
     boolean isHabitacionDisponible(@Param("habitacionId") UUID habitacionId,
                                    @Param("fechaIngreso") LocalDate fechaIngreso,
                                    @Param("fechaSalida") LocalDate fechaSalida);
+
+    @Query("SELECT CASE WHEN COUNT(r) = 0 THEN true ELSE false END FROM Reserva r " +
+           "JOIN r.detalles d " +
+           "WHERE d.habitacion.id = :habitacionId " +
+           "AND UPPER(r.estado) NOT IN ('CANCELADA', 'CANCELADO') " +
+           "AND r.id != :reservaId " +
+           "AND r.fechaIngreso < :fechaSalida " +
+           "AND r.fechaSalida > :fechaIngreso")
+    boolean isHabitacionDisponibleParaReserva(@Param("habitacionId") UUID habitacionId,
+                                              @Param("fechaIngreso") LocalDate fechaIngreso,
+                                              @Param("fechaSalida") LocalDate fechaSalida,
+                                              @Param("reservaId") UUID reservaId);
 }

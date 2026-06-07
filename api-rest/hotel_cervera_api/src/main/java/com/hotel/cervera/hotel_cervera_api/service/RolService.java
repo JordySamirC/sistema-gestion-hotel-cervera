@@ -66,8 +66,8 @@ public class RolService {
                 .id(rol.getId())
                 .nombre(rol.getNombre())
                 .descripcion(rol.getDescripcion())
-                .createdAt(rol.getCreatedAt())
-                .updatedAt(rol.getUpdatedAt())
+                .fechaCreacion(rol.getFechaCreacion())
+                .fechaActualizacion(rol.getFechaActualizacion())
                 .build();
     }
 }

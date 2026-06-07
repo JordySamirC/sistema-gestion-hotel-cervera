@@ -17,9 +17,9 @@ public class UsuarioUpdateRequest {
     @Size(max = 50)
     private String apellidos;
 
-    @Email(message = "Email inválido")
+    @Email(message = "Correo electrónico inválido")
     @Size(max = 100)
-    private String email;
+    private String correoElectronico;
 
     @Size(max = 20)
     private String estado;

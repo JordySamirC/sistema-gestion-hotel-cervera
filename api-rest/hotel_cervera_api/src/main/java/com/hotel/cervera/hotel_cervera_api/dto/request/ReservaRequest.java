@@ -40,4 +40,6 @@ public class ReservaRequest {
 
     @NotEmpty(message = "Debe seleccionar al menos una habitación")
     private List<UUID> habitacionesIds;
+
+    private List<UUID> huespedesIds;
 }

@@ -15,7 +15,7 @@ public class CanalesVenta {
     @Column(name = "nombre", nullable = false, unique = true, length = 50)
     private String nombre;
 
-    @Column(name = "icono", length = 10)
+    @Transient
     private String icono;
 
     @Column(name = "activo", nullable = false)

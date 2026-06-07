@@ -21,5 +21,8 @@ public class TipoHabitacionRequest {
     @Positive(message = "La capacidad máxima debe ser al menos 1")
     private Integer capacidadMax;
 
+    @Size(max = 100, message = "La configuración de camas no debe exceder 100 caracteres")
+    private String configuracionCamas;
+
     private String descripcion;
 }

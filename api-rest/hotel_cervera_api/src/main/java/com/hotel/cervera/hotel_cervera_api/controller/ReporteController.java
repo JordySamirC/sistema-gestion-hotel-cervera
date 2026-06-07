@@ -1,10 +1,12 @@
 package com.hotel.cervera.hotel_cervera_api.controller;
 
+import com.hotel.cervera.hotel_cervera_api.dto.ReporteCompletoDTO;
 import com.hotel.cervera.hotel_cervera_api.service.ReporteService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -80,5 +82,16 @@ public class ReporteController {
         return ResponseEntity.ok(Map.of(
                 "proyeccion7Dias", reporteService.proyeccionOcupacion()
         ));
+    }
+
+    @GetMapping("/completo")
+    @Operation(summary = "Reporte ejecutivo completo", description = "Obtiene todos los KPIs, gráficos y series analíticas para un período")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Reporte completo obtenido exitosamente")
+    })
+    public ResponseEntity<ReporteCompletoDTO> reporteCompleto(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta) {
+        return ResponseEntity.ok(reporteService.obtenerReporteCompleto(desde, hasta));
     }
 }

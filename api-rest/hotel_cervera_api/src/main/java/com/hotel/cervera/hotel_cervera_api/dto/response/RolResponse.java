@@ -16,6 +16,6 @@ public class RolResponse {
     private UUID id;
     private String nombre;
     private String descripcion;
-    private OffsetDateTime createdAt;
-    private OffsetDateTime updatedAt;
+    private OffsetDateTime fechaCreacion;
+    private OffsetDateTime fechaActualizacion;
 }

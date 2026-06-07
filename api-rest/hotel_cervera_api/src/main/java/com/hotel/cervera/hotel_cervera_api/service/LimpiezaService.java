@@ -55,9 +55,9 @@ public class LimpiezaService {
         Habitacion habitacion = habitacionRepository.findById(request.getHabitacionId())
                 .orElseThrow(() -> new ResourceNotFoundException("Habitación", request.getHabitacionId()));
 
-        if (!"por_limpiar".equals(habitacion.getEstadoActual())) {
+        if (!"Por limpiar".equals(habitacion.getEstadoActual())) {
             throw new BusinessException(
-                    "La habitación debe estar en estado 'por_limpiar'. Estado actual: "
+                    "La habitación debe estar en estado 'Por limpiar'. Estado actual: "
                             + habitacion.getEstadoActual());
         }
 
@@ -75,7 +75,7 @@ public class LimpiezaService {
                 .build();
         limpieza = limpiezaRepository.save(limpieza);
 
-        habitacion.setEstadoActual("en_limpieza");
+        habitacion.setEstadoActual("En limpieza");
         habitacionRepository.save(habitacion);
 
         return toResponse(limpieza);
@@ -97,7 +97,7 @@ public class LimpiezaService {
         limpieza = limpiezaRepository.save(limpieza);
 
         Habitacion habitacion = limpieza.getHabitacion();
-        habitacion.setEstadoActual("disponible");
+        habitacion.setEstadoActual("Disponible");
         habitacionRepository.save(habitacion);
 
         return toResponse(limpieza);
@@ -121,7 +121,7 @@ public class LimpiezaService {
                 .fechaInicio(entity.getFechaInicio())
                 .fechaFin(entity.getFechaFin())
                 .duracionSegundos(entity.getDuracionSegundos())
-                .createdAt(entity.getCreatedAt())
+                .fechaCreacion(entity.getFechaCreacion())
                 .build();
     }
 }

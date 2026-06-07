@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -36,10 +37,11 @@ public class ReservaResponse {
     private String canalVentaNombre;
     private String canalVentaIcono;
     private String canalVentaOtro;
-    private OffsetDateTime createdAt;
-    private OffsetDateTime updatedAt;
+    private OffsetDateTime fechaCreacion;
+    private OffsetDateTime fechaActualizacion;
     private UUID grupoId;
     private String nombreGrupo;
     private List<ReservaDetalleResponse> detalles;
     private List<ReservaHuespedResponse> huespedes;
+    private BigDecimal precioTotal;
 }

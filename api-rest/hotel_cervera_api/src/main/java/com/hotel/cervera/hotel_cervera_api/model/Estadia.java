@@ -22,11 +22,11 @@ public class Estadia {
     @JoinColumn(name = "reserva_id", nullable = false)
     private Reserva reserva;
 
-    @Column(name = "fecha_check_in", nullable = false)
-    private OffsetDateTime fechaCheckIn;
+    @Column(name = "fecha_ingreso", nullable = false)
+    private OffsetDateTime fechaIngreso;
 
-    @Column(name = "fecha_check_out")
-    private OffsetDateTime fechaCheckOut;
+    @Column(name = "fecha_salida")
+    private OffsetDateTime fechaSalida;
 
     @Column(name = "noches")
     private Integer noches;
@@ -38,10 +38,10 @@ public class Estadia {
     private String estado;
 
     @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private OffsetDateTime createdAt;
+    @Column(name = "fecha_creacion", updatable = false)
+    private OffsetDateTime fechaCreacion;
 
     @UpdateTimestamp
-    @Column(name = "updated_at")
-    private OffsetDateTime updatedAt;
+    @Column(name = "fecha_actualizacion")
+    private OffsetDateTime fechaActualizacion;
 }

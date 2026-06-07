@@ -1,9 +1,6 @@
 package com.hotel.cervera.hotel_cervera_api.dto.request;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -18,21 +15,24 @@ import java.util.UUID;
 public class GastoRequest {
 
     @NotNull(message = "La fecha del gasto es obligatoria")
+    @PastOrPresent(message = "La fecha del gasto no puede ser futura")
     private LocalDate fechaGasto;
 
     @NotBlank(message = "La descripción es obligatoria")
-    @Size(max = 200)
+    @Size(max = 200, message = "La descripción no puede exceder los 200 caracteres")
     private String descripcion;
 
-    @NotBlank(message = "La categoría es obligatoria")
-    @Size(max = 50)
-    private String categoria;
+    @NotNull(message = "La categoría es obligatoria")
+    private Long categoriaId;
+
+    @NotNull(message = "El tipo de gasto es obligatorio")
+    private Long tipoGastoId;
 
     @NotNull(message = "El monto es obligatorio")
     @Positive(message = "El monto debe ser mayor a 0")
     private BigDecimal monto;
 
-    private Boolean esFijo;
+    private String observaciones;
 
     @NotNull(message = "El usuario creador es obligatorio")
     private UUID creadoPor;

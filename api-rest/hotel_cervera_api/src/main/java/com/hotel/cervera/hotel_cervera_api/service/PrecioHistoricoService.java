@@ -55,15 +55,21 @@ public class PrecioHistoricoService {
 
         TipoHabitacion tipo = tipoHabitacionRepository.findById(request.getTipoHabitacionId())
                 .orElseThrow(() -> new ResourceNotFoundException("Tipo de habitación", request.getTipoHabitacionId()));
-        Usuario usuario = usuarioRepository.findById(request.getCreatedBy())
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario", request.getCreatedBy()));
+        Usuario usuario = usuarioRepository.findById(request.getCreadoPor())
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario", request.getCreadoPor()));
+
+        repository.findPrecioVigente(request.getTipoHabitacionId(), request.getFechaInicio().minusDays(1))
+                .ifPresent(previo -> {
+                    previo.setFechaFin(request.getFechaInicio().minusDays(1));
+                    repository.save(previo);
+                });
 
         PrecioHistorico entity = PrecioHistorico.builder()
                 .tipoHabitacion(tipo)
                 .precioNoche(request.getPrecioNoche())
                 .fechaInicio(request.getFechaInicio())
                 .fechaFin(request.getFechaFin())
-                .createdBy(usuario)
+                .creadoPor(usuario)
                 .build();
         return toResponse(repository.save(entity));
     }
@@ -79,14 +85,14 @@ public class PrecioHistoricoService {
 
         TipoHabitacion tipo = tipoHabitacionRepository.findById(request.getTipoHabitacionId())
                 .orElseThrow(() -> new ResourceNotFoundException("Tipo de habitación", request.getTipoHabitacionId()));
-        Usuario usuario = usuarioRepository.findById(request.getCreatedBy())
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario", request.getCreatedBy()));
+        Usuario usuario = usuarioRepository.findById(request.getCreadoPor())
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario", request.getCreadoPor()));
 
         entity.setTipoHabitacion(tipo);
         entity.setPrecioNoche(request.getPrecioNoche());
         entity.setFechaInicio(request.getFechaInicio());
         entity.setFechaFin(request.getFechaFin());
-        entity.setCreatedBy(usuario);
+        entity.setCreadoPor(usuario);
         return toResponse(repository.save(entity));
     }
 
@@ -106,8 +112,8 @@ public class PrecioHistoricoService {
                 .precioNoche(entity.getPrecioNoche())
                 .fechaInicio(entity.getFechaInicio())
                 .fechaFin(entity.getFechaFin())
-                .createdAt(entity.getCreatedAt())
-                .createdBy(entity.getCreatedBy().getId())
+                .fechaCreacion(entity.getFechaCreacion())
+                .creadoPor(entity.getCreadoPor() != null ? entity.getCreadoPor().getId() : null)
                 .build();
     }
 }

@@ -82,7 +82,7 @@ public class ClienteService {
                 .nacionalidad(request.getNacionalidad())
                 .genero(request.getGenero())
                 .telefono(request.getTelefono())
-                .email(request.getEmail())
+                .correoElectronico(request.getCorreoElectronico())
                 .fechaNacimiento(request.getFechaNacimiento())
                 .vecesHospedado(0)
                 .estado("ACTIVO")
@@ -113,7 +113,7 @@ public class ClienteService {
         entity.setNacionalidad(request.getNacionalidad());
         entity.setGenero(request.getGenero());
         entity.setTelefono(request.getTelefono());
-        entity.setEmail(request.getEmail());
+        entity.setCorreoElectronico(request.getCorreoElectronico());
         entity.setFechaNacimiento(request.getFechaNacimiento());
         return toResponse(repository.save(entity));
     }
@@ -149,11 +149,11 @@ public class ClienteService {
                 .genero(entity.getGenero())
                 .estado(entity.getEstado())
                 .telefono(entity.getTelefono())
-                .email(entity.getEmail())
+                .correoElectronico(entity.getCorreoElectronico())
                 .fechaNacimiento(entity.getFechaNacimiento())
                 .vecesHospedado(entity.getVecesHospedado())
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
+                .fechaCreacion(entity.getFechaCreacion())
+                .fechaActualizacion(entity.getFechaActualizacion())
                 .build();
     }
 }

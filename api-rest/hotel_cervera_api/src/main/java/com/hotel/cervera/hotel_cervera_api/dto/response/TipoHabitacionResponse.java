@@ -16,7 +16,8 @@ public class TipoHabitacionResponse {
     private UUID id;
     private String nombre;
     private Integer capacidadMax;
+    private String configuracionCamas;
     private String descripcion;
-    private OffsetDateTime createdAt;
-    private OffsetDateTime updatedAt;
+    private OffsetDateTime fechaCreacion;
+    private OffsetDateTime fechaActualizacion;
 }
