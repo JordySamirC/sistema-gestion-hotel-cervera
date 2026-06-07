@@ -12,3 +12,26 @@ api-rest/hotel_cervera_api/target/
 # Residuos / Metadatos locales
 .serena/
 %TEMP%/
+
+# Archivos de bitacora y logs de ejecucion
+*.log
+logs/
+api-rest/hotel_cervera_api/*.log
+web-app/*.log
+
+# Reportes y scripts de auditoria locales (Lighthouse)
+web-app/lighthouse-login-report
+web-app/lighthouse-login.report.*
+web-app/run-lighthouse-audit.mjs
+web-app/run-lighthouse.mjs
+
+# Docker Secrets — NUNCA subir al repositorio
+docker/secrets/*.txt
+
+# Backups de base de datos
+backups/*.dump
+backups/*.sql
+backups/*.sql.gz
+
+# Archivos .env locales de Docker (si existen variantes locales)
+*.env.local

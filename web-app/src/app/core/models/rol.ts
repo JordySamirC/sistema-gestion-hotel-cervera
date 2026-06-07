@@ -2,8 +2,8 @@ export interface RolResponse {
   id: string;
   nombre: string;
   descripcion: string;
-  createdAt: string;
-  updatedAt: string;
+  fechaCreacion: string;
+  fechaActualizacion: string;
 }
 
 export interface RolRequest {

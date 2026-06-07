@@ -1,5 +1,5 @@
 export interface LoginRequest {
-  email: string;
+  correoElectronico: string;
   contrasena: string;
 }
 
@@ -8,7 +8,7 @@ export interface LoginResponse {
   tipo: string;
   id: string;
   nombreUsuario: string;
-  email: string;
+  correoElectronico: string;
   nombres: string;
   apellidos: string;
   rol: string;
@@ -17,20 +17,20 @@ export interface LoginResponse {
 export interface UsuarioResponse {
   id: string;
   nombreUsuario: string;
-  email: string;
+  correoElectronico: string;
   nombres: string;
   apellidos: string;
   rolId: string;
   rolNombre: string;
   estado: string;
   ultimoAcceso: string;
-  createdAt: string;
-  updatedAt: string;
+  fechaCreacion: string;
+  fechaActualizacion: string;
 }
 
 export interface UsuarioRequest {
   nombreUsuario: string;
-  email: string;
+  correoElectronico: string;
   contrasena: string;
   nombres: string;
   apellidos: string;
@@ -40,7 +40,7 @@ export interface UsuarioRequest {
 export interface UsuarioUpdateRequest {
   nombres?: string;
   apellidos?: string;
-  email?: string;
+  correoElectronico?: string;
   estado?: string;
 }
 
@@ -50,7 +50,7 @@ export interface CambiarPasswordRequest {
 }
 
 export interface ForgotPasswordRequest {
-  email: string;
+  correoElectronico: string;
 }
 
 export interface ResetPasswordRequest {

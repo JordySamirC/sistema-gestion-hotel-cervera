@@ -27,12 +27,13 @@ export interface ReservaResponse {
   canalVentaNombre: string;
   canalVentaIcono: string;
   canalVentaOtro: string;
-  createdAt: string;
-  updatedAt: string;
+  fechaCreacion: string;
+  fechaActualizacion: string;
   grupoId?: string;
   nombreGrupo?: string;
   detalles: ReservaDetalleResponse[];
   huespedes: ReservaHuespedResponse[];
+  precioTotal?: number;
 }
 
 export interface ReservaHuespedResponse {
@@ -42,7 +43,7 @@ export interface ReservaHuespedResponse {
   clienteNombre: string;
   clienteDocumento: string;
   esTitular: boolean;
-  createdAt: string;
+  fechaCreacion: string;
 }
 
 export interface GrupoResponse {
@@ -52,13 +53,14 @@ export interface GrupoResponse {
   responsablePagoNombre: string;
   fechaIngreso: string;
   fechaSalida: string;
+  estado: string;
   canalVentaNombre: string;
   canalVentaIcono: string;
   canalVentaOtro: string;
   creadoPor: string;
   creadoPorNombre: string;
-  createdAt: string;
-  updatedAt: string;
+  fechaCreacion: string;
+  fechaActualizacion: string;
   reservas: ReservaResponse[];
 }
 
@@ -90,8 +92,10 @@ export interface ReservaDetalleResponse {
   reservaId: string;
   habitacionId: string;
   habitacionNumero: string;
+  tipoNombre: string;
+  capacidadMax: number;
   precioAplicado: number;
-  createdAt: string;
+  fechaCreacion: string;
 }
 
 export interface ReservaRequest {
@@ -119,16 +123,28 @@ export interface EstadiaResponse {
   id: string;
   reservaId: string;
   reservaCodigo: string;
-  fechaCheckIn: string;
-  fechaCheckOut: string | null;
+  fechaIngreso: string;
+  fechaSalida: string | null;
   noches: number;
   montoTotal: number;
   estado: string;
-  createdAt: string;
-  updatedAt: string;
+  fechaCreacion: string;
+  fechaActualizacion: string;
+}
+
+export interface ActualizarReservaRequest {
+  fechaIngreso?: string;
+  fechaSalida?: string;
+  adultos?: number;
+  ninos?: number;
+}
+
+export interface ExtenderReservaRequest {
+  nuevaFechaSalida: string;
 }
 
 export interface PanelReservaItem {
+  id: string;
   tipo: 'INDIVIDUAL' | 'GRUPO' | 'HIJA';
   codigo: string;
   cliente: string;
@@ -138,16 +154,18 @@ export interface PanelReservaItem {
   estado: string;
   hijas?: PanelReservaItem[];
   expandido?: boolean;
+  precioTotal?: number;
+  habitacionNumero?: string;
 }
 
 export interface CheckInRequest {
   reservaId: string;
-  fechaCheckIn?: string;
+  fechaIngreso?: string;
 }
 
 export interface CheckOutRequest {
   estadiaId: string;
-  fechaCheckOut?: string;
+  fechaSalida?: string;
 }
 
 export interface AddHabitacionRequest {
@@ -164,4 +182,21 @@ export interface GrupoUpdateRequest {
   fechaSalida?: string;
   canalVentaId?: number;
   canalVentaOtro?: string;
+}
+
+export interface ExtenderGrupoRequest {
+  nuevaFechaSalida: string;
+}
+
+export interface CancelarGrupoRequest {
+  motivoCancelacion: string;
+  observaciones?: string;
+}
+
+export interface AgregarHuespedRequest {
+  clienteId: string;
+}
+
+export interface CambiarHabitacionRequest {
+  nuevaHabitacionId: string;
 }

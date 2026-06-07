@@ -15,7 +15,7 @@ import { CommonModule } from '@angular/common';
         <div class="reset-header">
           <div class="brand-icon">
             <div class="logo-glow"></div>
-            <img src="../assets/images/Logo.png" alt="Hotel Cervera" class="logo-img" />
+            <img src="../assets/images/Logo.webp" alt="Hotel Cervera" class="logo-img" />
           </div>
           <h1>Hotel Cervera</h1>
           <p class="description">Restablecer contraseña</p>

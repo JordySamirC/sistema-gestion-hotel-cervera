@@ -15,7 +15,7 @@ import { CommonModule } from '@angular/common';
         <div class="login-header">
           <div class="brand-icon">
             <div class="logo-glow"></div>
-            <img src="../assets/images/Logo.png" alt="Hotel Cervera" class="logo-img" />
+            <img src="../assets/images/Logo.webp" alt="Hotel Cervera" class="logo-img" />
           </div>
           <h1>Hotel Cervera</h1>
           <p class="location">Rio Santiago · Amazonas, Perú</p>
@@ -229,10 +229,9 @@ import { CommonModule } from '@angular/common';
     .logo-img {
       width: 80px;
       height: 80px;
-      border-radius: 50%;
-      object-fit: cover;
-      box-shadow: 0 2px 16px rgba(47, 91, 79, 0.25);
+      object-fit: contain;
       position: relative;
+      filter: drop-shadow(0 2px 8px rgba(47, 91, 79, 0.2));
     }
 
     .login-header h1 {
@@ -540,7 +539,7 @@ export class LoginComponent {
   forgotSent = false;
   forgotSentMessage = '';
 
-  constructor(private auth: AuthService, private router: Router) {}
+  constructor(private auth: AuthService, private router: Router) { }
 
   onSubmit(): void {
     if (!this.email || !this.password) {
@@ -557,9 +556,9 @@ export class LoginComponent {
     this.loading = true;
     this.error = '';
 
-    this.auth.login({ email: this.email, contrasena: this.password }).subscribe({
+    this.auth.login({ correoElectronico: this.email, contrasena: this.password }).subscribe({
       next: () => {
-        this.router.navigate(['/dashboard']);
+        this.router.navigate(['/panel']);
       },
       error: (err) => {
         this.loading = false;
@@ -573,7 +572,7 @@ export class LoginComponent {
     this.forgotLoading = true;
     this.forgotError = '';
 
-    this.auth.forgotPassword({ email: this.forgotEmail }).subscribe({
+    this.auth.forgotPassword({ correoElectronico: this.forgotEmail }).subscribe({
       next: (res) => {
         this.forgotLoading = false;
         this.forgotSent = true;

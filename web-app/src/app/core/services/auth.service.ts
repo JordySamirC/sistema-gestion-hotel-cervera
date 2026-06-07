@@ -45,11 +45,13 @@ export class AuthService {
   }
 
   esGerente(): boolean {
-    return this.getRol() === 'gerente';
+    const rol = this.getRol()?.toLowerCase();
+    return rol === 'gerente' || rol === 'admin';
   }
 
   esLimpieza(): boolean {
-    return this.getRol() === 'limpieza';
+    const rol = this.getRol()?.toLowerCase();
+    return rol === 'asistente de habitaciones' || rol === 'limpieza';
   }
 
   forgotPassword(request: ForgotPasswordRequest): Observable<{ message: string }> {

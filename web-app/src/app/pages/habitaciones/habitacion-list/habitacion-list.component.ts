@@ -39,8 +39,7 @@ import { HabitacionResponse, HabitacionRequest, TipoHabitacionResponse } from '.
             <label class="filter-label"><i class="bi bi-building mr-1"></i> Piso</label>
             <select [(ngModel)]="filtroPiso" (ngModelChange)="aplicarFiltros()" class="filter-select">
               <option value="">Todos los pisos</option>
-              <option [value]="2">Piso 2</option>
-              <option [value]="3">Piso 3</option>
+              <option *ngFor="let p of pisosUnicos" [value]="p">Piso {{ p }}</option>
             </select>
           </div>
 
@@ -48,13 +47,13 @@ import { HabitacionResponse, HabitacionRequest, TipoHabitacionResponse } from '.
             <label class="filter-label"><i class="bi bi-info-circle mr-1"></i> Estado</label>
             <select [(ngModel)]="filtroEstado" (ngModelChange)="aplicarFiltros()" class="filter-select">
               <option value="">Todos los estados</option>
-              <option value="Disponible">● Disponible</option>
-              <option value="Ocupada">● Ocupada</option>
-              <option value="Por limpiar">● Por limpiar</option>
-              <option value="En limpieza">● En limpieza</option>
-              <option value="Mantenimiento">● Mantenimiento</option>
-              <option value="Remodelación">● Remodelación</option>
-              <option value="Inhabitable">● Inhabitable</option>
+              <option value="Disponible">Disponible</option>
+              <option value="Ocupada">Ocupada</option>
+              <option value="Por limpiar">Por limpiar</option>
+              <option value="En limpieza">En limpieza</option>
+              <option value="Mantenimiento">Mantenimiento</option>
+              <option value="Remodelación">Remodelación</option>
+              <option value="Inhabitable">Inhabitable</option>
             </select>
           </div>
 
@@ -72,6 +71,9 @@ import { HabitacionResponse, HabitacionRequest, TipoHabitacionResponse } from '.
             </button>
             <button class="btn-limpiar" (click)="limpiarFiltros()">
               <i class="bi bi-trash"></i> Limpiar
+            </button>
+            <button *ngIf="auth.esGerente()" class="btn-filtrar" style="background: linear-gradient(135deg, #D4A843 0%, #8B5A2B 100%);" (click)="abrirNuevo()">
+              <i class="bi bi-plus-lg"></i> Nueva
             </button>
           </div>
         </div>
@@ -177,7 +179,7 @@ import { HabitacionResponse, HabitacionRequest, TipoHabitacionResponse } from '.
       <div class="modal-backdrop" *ngIf="mostrarModal">
         <div class="modal-content animate-in">
           <div class="modal-header">
-            <h3><i class="bi bi-pencil-square mr-1 text-dorado-amazonico"></i> Editar Habitación - {{ habitacionSeleccionada?.numero }}</h3>
+            <h3><i class="bi bi-pencil-square mr-1 text-dorado-amazonico"></i> {{ habitacionSeleccionada ? 'Editar Habitación - ' + habitacionSeleccionada.numero : 'Nueva Habitación' }}</h3>
             <button class="close-btn" (click)="cerrarModal()">✕</button>
           </div>
           
@@ -198,13 +200,10 @@ import { HabitacionResponse, HabitacionRequest, TipoHabitacionResponse } from '.
                 />
               </div>
 
-              <!-- PISO -->
               <div class="form-group">
                 <label class="form-label"><i class="bi bi-building mr-1"></i> Piso *</label>
-                <select [(ngModel)]="requestForm.piso" name="piso" required class="form-select">
-                  <option [value]="2">Piso 2</option>
-                  <option [value]="3">Piso 3</option>
-                </select>
+                <input type="number" [(ngModel)]="requestForm.piso" name="piso" required min="1" class="form-control" placeholder="Ej: 2" />
+                <p class="form-help text-xs text-slate-500 mt-1">El piso se creará automáticamente si no existe en los registros.</p>
               </div>
 
               <!-- TIPO -->
@@ -219,19 +218,19 @@ import { HabitacionResponse, HabitacionRequest, TipoHabitacionResponse } from '.
 
               <!-- ESTADO -->
               <div class="form-group">
-                <label class="form-label"><i class="bi bi-info-circle mr-1"></i> Estado (Solo para cambios del gerente)</label>
+                <label class="form-label"><i class="bi bi-info-circle mr-1"></i> Estado</label>
                 <select [(ngModel)]="requestForm.estado" name="estado" required class="form-select">
                   <!-- Si el estado actual es operativo, se muestra inactivo -->
                   <option 
-                    *ngIf="esEstadoOperativo(habitacionSeleccionada!.estadoActual)" 
-                    [value]="habitacionSeleccionada!.estadoActual" 
+                    *ngIf="habitacionSeleccionada && esEstadoOperativo(habitacionSeleccionada.estadoActual)" 
+                    [value]="habitacionSeleccionada.estadoActual" 
                     disabled>
-                    ● {{ habitacionSeleccionada!.estadoActual }} (En Operación)
+                     {{ habitacionSeleccionada.estadoActual }} (En Operación)
                   </option>
-                  <option value="Disponible">● Disponible</option>
-                  <option value="Mantenimiento">● Mantenimiento</option>
-                  <option value="Remodelación">● Remodelación</option>
-                  <option value="Inhabitable">● Inhabitable</option>
+                  <option value="Disponible">Disponible</option>
+                  <option value="Mantenimiento">Mantenimiento</option>
+                  <option value="Remodelación">Remodelación</option>
+                  <option value="Inhabitable">Inhabitable</option>
                 </select>
                 <p class="form-help">
                   Los estados operativos (Ocupada, Por limpiar, En limpieza) se gestionan automáticamente a través de los flujos de recepción y limpieza.
@@ -256,7 +255,7 @@ import { HabitacionResponse, HabitacionRequest, TipoHabitacionResponse } from '.
               <button type="button" class="btn-cancel" (click)="cerrarModal()">Cancelar</button>
               <button type="submit" class="btn-save" [disabled]="guardando">
                 <i class="bi" [class.bi-hourglass-split]="guardando" [class.bi-check-lg]="!guardando"></i>
-                {{ guardando ? ' Guardando...' : ' Actualizar' }}
+                {{ guardando ? ' Guardando...' : (habitacionSeleccionada ? ' Actualizar' : ' Crear Habitación') }}
               </button>
             </div>
           </form>
@@ -952,6 +951,7 @@ export class HabitacionListComponent implements OnInit {
   habitaciones: HabitacionResponse[] = [];
   habitacionesFiltradas: HabitacionResponse[] = [];
   tipos: TipoHabitacionResponse[] = [];
+  pisosUnicos: number[] = [];
 
   // Filtros
   queryBusqueda = '';
@@ -972,7 +972,7 @@ export class HabitacionListComponent implements OnInit {
   constructor(
     private habitacionService: HabitacionService,
     public auth: AuthService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.cargarDatos();
@@ -982,6 +982,7 @@ export class HabitacionListComponent implements OnInit {
     this.habitacionService.getAll().subscribe({
       next: (data) => {
         this.habitaciones = data;
+        this.pisosUnicos = [...new Set(data.map(h => h.piso))].sort((a, b) => a - b);
         this.aplicarFiltros();
       },
       error: () => alert('Error al cargar las habitaciones')
@@ -1106,6 +1107,19 @@ export class HabitacionListComponent implements OnInit {
     return ['Ocupada', 'Por limpiar', 'En limpieza'].includes(estado);
   }
 
+  abrirNuevo(): void {
+    this.habitacionSeleccionada = null;
+    this.requestForm = {
+      numero: '',
+      piso: 2,
+      tipoId: this.tipos.length > 0 ? this.tipos[0].id : '',
+      estado: 'Disponible',
+      notas: ''
+    };
+    this.guardando = false;
+    this.mostrarModal = true;
+  }
+
   // Modal de Edición
   abrirEditar(h: HabitacionResponse): void {
     this.habitacionSeleccionada = h;
@@ -1127,23 +1141,38 @@ export class HabitacionListComponent implements OnInit {
   }
 
   guardarCambios(): void {
-    if (!this.habitacionSeleccionada) return;
+    if (!this.habitacionSeleccionada && (!this.requestForm.numero || !this.requestForm.tipoId)) return;
     this.guardando = true;
 
     // Asegurarse de castear el piso a número por si acaso
     this.requestForm.piso = Number(this.requestForm.piso);
 
-    this.habitacionService.update(this.habitacionSeleccionada.id, this.requestForm).subscribe({
-      next: () => {
-        alert('Habitación actualizada con éxito.');
-        this.guardando = false;
-        this.cerrarModal();
-        this.cargarDatos(); // Recargar datos y aplicar filtros
-      },
-      error: (err) => {
-        alert(err.error?.message || 'Ocurrió un error al actualizar la habitación.');
-        this.guardando = false;
-      }
-    });
+    if (this.habitacionSeleccionada) {
+      this.habitacionService.update(this.habitacionSeleccionada.id, this.requestForm).subscribe({
+        next: () => {
+          alert('Habitación actualizada con éxito.');
+          this.guardando = false;
+          this.cerrarModal();
+          this.cargarDatos(); // Recargar datos y aplicar filtros
+        },
+        error: (err) => {
+          alert(err.error?.message || 'Ocurrió un error al actualizar la habitación.');
+          this.guardando = false;
+        }
+      });
+    } else {
+      this.habitacionService.create(this.requestForm).subscribe({
+        next: () => {
+          alert('Habitación creada con éxito.');
+          this.guardando = false;
+          this.cerrarModal();
+          this.cargarDatos();
+        },
+        error: (err) => {
+          alert(err.error?.message || 'Ocurrió un error al crear la habitación.');
+          this.guardando = false;
+        }
+      });
+    }
   }
 }

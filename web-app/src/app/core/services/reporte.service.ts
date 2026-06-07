@@ -34,4 +34,8 @@ export class ReporteService extends ApiService {
   getProyeccionOcupacion(): Observable<Record<string, any>> {
     return this.http.get<Record<string, any>>(`${this.baseUrl}/reportes/proyeccion-ocupacion`);
   }
+
+  getReporteCompleto(desde: string, hasta: string): Observable<any> {
+    return this.http.get<any>(`${this.baseUrl}/reportes/completo`, { params: { desde, hasta } });
+  }
 }

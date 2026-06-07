@@ -5,7 +5,6 @@ import { LoginComponent } from './pages/login/login.component';
 import { ResetPasswordComponent } from './pages/reset-password/reset-password.component';
 import { DashboardComponent } from './pages/dashboard/dashboard.component';
 import { HabitacionListComponent } from './pages/habitaciones/habitacion-list/habitacion-list.component';
-import { HabitacionFormComponent } from './pages/habitaciones/habitacion-form/habitacion-form.component';
 import { ClienteListComponent } from './pages/clientes/cliente-list/cliente-list.component';
 import { PanelReservasComponent } from './pages/reservas/panel-reservas/panel-reservas.component';
 import { ReservaFormComponent } from './pages/reservas/reserva-form/reserva-form.component';
@@ -19,6 +18,7 @@ import { ReportesComponent } from './pages/reportes/reportes.component';
 import { UsuarioListComponent } from './pages/usuarios/usuario-list/usuario-list.component';
 import { GastoListComponent } from './pages/gastos/gasto-list/gasto-list.component';
 import { PrecioListComponent } from './pages/precios/precio-list.component';
+import { RestriccionesFechaListComponent } from './pages/restricciones-fecha/restricciones-fecha-list.component';
 import { ConfiguracionComponent } from './pages/configuracion/configuracion.component';
 
 export const routes: Routes = [
@@ -29,25 +29,25 @@ export const routes: Routes = [
     component: MainLayoutComponent,
     canActivate: [authGuard],
     children: [
-      { path: 'dashboard', component: DashboardComponent },
+      { path: 'panel', component: DashboardComponent },
       { path: 'habitaciones', component: HabitacionListComponent },
-      { path: 'habitaciones/:id', component: HabitacionFormComponent },
       { path: 'reservas', component: PanelReservasComponent },
-      { path: 'reservas/nueva', component: ReservaFormComponent },
+      { path: 'reservas/individual/nueva', component: ReservaFormComponent },
       { path: 'reservas/grupo/nuevo', component: GrupoFormComponent },
       { path: 'reservas/:id', component: ReservaDetailComponent },
-      { path: 'check-in', component: CheckInComponent },
-      { path: 'check-out', component: CheckOutComponent },
+      { path: 'registrar-ingreso', component: CheckInComponent },
+      { path: 'registrar-salida', component: CheckOutComponent },
       { path: 'limpieza', component: LimpiezaListComponent },
       { path: 'clientes', component: ClienteListComponent, canActivate: [gerenteGuard] },
       { path: 'pagos', component: PagoListComponent, canActivate: [gerenteGuard] },
       { path: 'gastos', component: GastoListComponent, canActivate: [gerenteGuard] },
       { path: 'precios', component: PrecioListComponent, canActivate: [gerenteGuard] },
+      { path: 'restricciones-fecha', component: RestriccionesFechaListComponent, canActivate: [gerenteGuard] },
       { path: 'usuarios', component: UsuarioListComponent, canActivate: [gerenteGuard] },
       { path: 'reportes', component: ReportesComponent, canActivate: [gerenteGuard] },
       { path: 'configuracion', component: ConfiguracionComponent },
-      { path: '', redirectTo: '/dashboard', pathMatch: 'full' }
+      { path: '', redirectTo: '/panel', pathMatch: 'full' }
     ]
   },
-  { path: '**', redirectTo: '/dashboard' }
+  { path: '**', redirectTo: '/panel' }
 ];

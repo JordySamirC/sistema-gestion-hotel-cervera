@@ -22,6 +22,6 @@ export const gerenteGuard: CanActivateFn = () => {
     return true;
   }
 
-  router.navigate(['/dashboard']);
+  router.navigate(['/panel']);
   return false;
 };

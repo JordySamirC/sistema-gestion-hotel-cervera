@@ -8,11 +8,11 @@ export interface ClienteResponse {
   genero: string;
   estado: string;
   telefono: string;
-  email: string;
+  correoElectronico: string;
   vecesHospedado: number;
   fechaNacimiento: string;
-  createdAt: string;
-  updatedAt: string;
+  fechaCreacion: string;
+  fechaActualizacion: string;
 }
 
 export interface ClienteRequest {
@@ -23,6 +23,6 @@ export interface ClienteRequest {
   nacionalidad: string;
   genero: string;
   telefono: string;
-  email: string | null;
+  correoElectronico: string | null;
   fechaNacimiento: string | null;
 }

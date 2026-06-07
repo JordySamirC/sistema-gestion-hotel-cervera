@@ -1,0 +1,11 @@
+# backups/.gitkeep
+# Este directorio almacena los dumps de PostgreSQL para restauración inicial.
+# Los archivos .dump y .sql están excluidos del repositorio en .gitignore.
+#
+# Para generar el backup desde el PostgreSQL local (PowerShell):
+#
+#   & "C:\Program Files\PostgreSQL\16\bin\pg_dump.exe" `
+#       -U postgres `
+#       -d hotel_cervera_db `
+#       -Fc `
+#       -f "hotel_cervera_db.dump"

@@ -7,7 +7,7 @@ export interface LimpiezaResponse {
   fechaInicio: string;
   fechaFin: string | null;
   duracionSegundos: number | null;
-  createdAt: string;
+  fechaCreacion: string;
 }
 
 export interface IniciarLimpiezaRequest {

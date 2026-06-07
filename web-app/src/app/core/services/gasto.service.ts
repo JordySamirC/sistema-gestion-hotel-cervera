@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { GastoResponse, GastoRequest } from '../models/gasto';
+import { GastoResponse, GastoRequest, CategoriaGasto, TipoGasto } from '../models/gasto';
 import { ApiResponse } from '../models/api-response';
 import { ApiService } from './api.service';
 
@@ -11,22 +11,27 @@ export class GastoService extends ApiService {
     super();
   }
 
-  getAll(): Observable<GastoResponse[]> {
-    return this.http.get<GastoResponse[]>(`${this.baseUrl}/gastos`);
+  getConFiltros(desde: string, hasta: string, categoriaId?: number, tipoGastoId?: number): Observable<GastoResponse[]> {
+    const params: any = { desde, hasta };
+    if (categoriaId !== undefined && categoriaId !== null) {
+      params.categoriaId = categoriaId;
+    }
+    if (tipoGastoId !== undefined && tipoGastoId !== null) {
+      params.tipoGastoId = tipoGastoId;
+    }
+    return this.http.get<GastoResponse[]>(`${this.baseUrl}/gastos`, { params });
   }
 
   getById(id: string): Observable<GastoResponse> {
     return this.http.get<GastoResponse>(`${this.baseUrl}/gastos/${id}`);
   }
 
-  getByPeriodo(desde: string, hasta: string): Observable<GastoResponse[]> {
-    return this.http.get<GastoResponse[]>(`${this.baseUrl}/gastos/periodo`, {
-      params: { desde, hasta }
-    });
+  getCategorias(): Observable<CategoriaGasto[]> {
+    return this.http.get<CategoriaGasto[]>(`${this.baseUrl}/gastos/categorias`);
   }
 
-  getByCategoria(categoria: string): Observable<GastoResponse[]> {
-    return this.http.get<GastoResponse[]>(`${this.baseUrl}/gastos/categoria/${categoria}`);
+  getTipos(): Observable<TipoGasto[]> {
+    return this.http.get<TipoGasto[]>(`${this.baseUrl}/gastos/tipos`);
   }
 
   getResumenPorCategoria(desde: string, hasta: string): Observable<Record<string, number>> {
@@ -45,5 +50,11 @@ export class GastoService extends ApiService {
 
   delete(id: string): Observable<ApiResponse> {
     return this.http.delete<ApiResponse>(`${this.baseUrl}/gastos/${id}`);
+  }
+
+  anularGasto(id: string, motivo: string, usuarioId: string): Observable<GastoResponse> {
+    return this.http.post<GastoResponse>(`${this.baseUrl}/gastos/${id}/anular`, null, {
+      params: { motivo, usuarioId }
+    });
   }
 }

@@ -7,14 +7,15 @@ export interface HabitacionResponse {
   capacidadMax: number;
   estadoActual: string;
   notas: string;
-  createdAt: string;
-  updatedAt: string;
+  fechaCreacion: string;
+  fechaActualizacion: string;
 }
 
 export interface HabitacionRequest {
   numero: string;
   piso: number;
   tipoId: string;
+  estado?: string;
   notas?: string;
 }
 
@@ -26,14 +27,16 @@ export interface TipoHabitacionResponse {
   id: string;
   nombre: string;
   capacidadMax: number;
+  configuracionCamas: string;
   descripcion: string;
-  createdAt: string;
-  updatedAt: string;
+  fechaCreacion: string;
+  fechaActualizacion: string;
 }
 
 export interface TipoHabitacionRequest {
   nombre: string;
   capacidadMax: number;
+  configuracionCamas?: string;
   descripcion?: string;
 }
 
@@ -44,8 +47,8 @@ export interface PrecioHistoricoResponse {
   precioNoche: number;
   fechaInicio: string;
   fechaFin: string | null;
-  createdAt: string;
-  createdBy: string;
+  fechaCreacion: string;
+  creadoPor: string;
 }
 
 export interface PrecioHistoricoRequest {
@@ -53,5 +56,5 @@ export interface PrecioHistoricoRequest {
   precioNoche: number;
   fechaInicio: string;
   fechaFin?: string;
-  createdBy: string;
+  creadoPor: string;
 }

@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { ReservaResponse, ReservaRequest, ReservaDetalleResponse, ReservaDetalleRequest, CancelarReservaRequest, EstadiaResponse, CheckInRequest, CheckOutRequest, GrupoResponse, GrupoRequest, GrupoUpdateRequest, AddHabitacionRequest, ReservaHuespedResponse, PanelReservaItem, CanalVenta } from '../models/reserva';
+import { ActualizarReservaRequest, AgregarHuespedRequest, CambiarHabitacionRequest, ExtenderReservaRequest, ExtenderGrupoRequest, CancelarGrupoRequest, ReservaResponse, ReservaRequest, ReservaDetalleResponse, ReservaDetalleRequest, CancelarReservaRequest, EstadiaResponse, CheckInRequest, CheckOutRequest, GrupoResponse, GrupoRequest, GrupoUpdateRequest, AddHabitacionRequest, ReservaHuespedResponse, PanelReservaItem, CanalVenta } from '../models/reserva';
+import { HabitacionResponse } from '../models/habitacion';
 import { ApiResponse } from '../models/api-response';
 import { ApiService } from './api.service';
 
@@ -31,6 +32,14 @@ export class ReservaService extends ApiService {
 
   create(request: ReservaRequest): Observable<ReservaResponse> {
     return this.http.post<ReservaResponse>(`${this.baseUrl}/reservas`, request);
+  }
+
+  update(id: string, request: ActualizarReservaRequest): Observable<ReservaResponse> {
+    return this.http.patch<ReservaResponse>(`${this.baseUrl}/reservas/${id}`, request);
+  }
+
+  extender(id: string, request: ExtenderReservaRequest): Observable<ReservaResponse> {
+    return this.http.patch<ReservaResponse>(`${this.baseUrl}/reservas/${id}/extender`, request);
   }
 
   cancelar(id: string, request: CancelarReservaRequest): Observable<ReservaResponse> {
@@ -81,6 +90,14 @@ export class ReservaService extends ApiService {
     return this.http.get<ReservaHuespedResponse[]>(`${this.baseUrl}/grupos/${reservaId}/huespedes`);
   }
 
+  extenderGrupo(id: string, request: ExtenderGrupoRequest): Observable<GrupoResponse> {
+    return this.http.patch<GrupoResponse>(`${this.baseUrl}/grupos/${id}/extender`, request);
+  }
+
+  cancelarGrupo(id: string, request: CancelarGrupoRequest, usuarioId: string): Observable<ApiResponse> {
+    return this.http.patch<ApiResponse>(`${this.baseUrl}/grupos/${id}/cancelar?usuarioId=${usuarioId}`, request);
+  }
+
   removeDetalle(reservaId: string, detalleId: string): Observable<ApiResponse> {
     return this.http.delete<ApiResponse>(`${this.baseUrl}/reservas/${reservaId}/detalles/${detalleId}`);
   }
@@ -91,6 +108,24 @@ export class ReservaService extends ApiService {
 
   getPanel(): Observable<PanelReservaItem[]> {
     return this.http.get<PanelReservaItem[]>(`${this.baseUrl}/reservas/panel`);
+  }
+
+  addHuesped(reservaId: string, request: AgregarHuespedRequest): Observable<ReservaHuespedResponse> {
+    return this.http.post<ReservaHuespedResponse>(`${this.baseUrl}/reservas/${reservaId}/huespedes`, request);
+  }
+
+  removeHuesped(reservaId: string, huespedId: string): Observable<ApiResponse> {
+    return this.http.delete<ApiResponse>(`${this.baseUrl}/reservas/${reservaId}/huespedes/${huespedId}`);
+  }
+
+  changeHabitacion(reservaId: string, request: CambiarHabitacionRequest): Observable<ReservaResponse> {
+    return this.http.patch<ReservaResponse>(`${this.baseUrl}/reservas/${reservaId}/habitacion`, request);
+  }
+
+  getHabitacionesDisponibles(fechaIngreso: string, fechaSalida: string): Observable<HabitacionResponse[]> {
+    return this.http.get<HabitacionResponse[]>(`${this.baseUrl}/habitaciones/disponibles`, {
+      params: { fechaIngreso, fechaSalida }
+    });
   }
 
   getEstadiasActivas(): Observable<EstadiaResponse[]> {
@@ -107,5 +142,9 @@ export class ReservaService extends ApiService {
 
   checkOut(estadiaId: string, request?: CheckOutRequest): Observable<EstadiaResponse> {
     return this.http.put<EstadiaResponse>(`${this.baseUrl}/estadias/${estadiaId}/check-out`, request ?? {});
+  }
+
+  checkOutGrupo(grupoId: string, request: import('../models/pago').PagoGrupoRequest): Observable<EstadiaResponse[]> {
+    return this.http.post<EstadiaResponse[]>(`${this.baseUrl}/estadias/grupo/${grupoId}/check-out`, request);
   }
 }

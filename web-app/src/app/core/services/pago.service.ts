@@ -22,6 +22,10 @@ export class PagoService extends ApiService {
     return this.http.get<PagoResponse>(`${this.baseUrl}/pagos/estadia/${estadiaId}`);
   }
 
+  getByGrupo(grupoId: string): Observable<PagoResponse> {
+    return this.http.get<PagoResponse>(`${this.baseUrl}/pagos/grupo/${grupoId}`);
+  }
+
   getByPeriodo(desde: string, hasta: string): Observable<PagoResponse[]> {
     return this.http.get<PagoResponse[]>(`${this.baseUrl}/pagos/periodo`, {
       params: { desde, hasta }
