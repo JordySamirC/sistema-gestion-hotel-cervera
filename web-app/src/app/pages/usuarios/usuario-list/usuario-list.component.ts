@@ -20,14 +20,15 @@ import { RolResponse } from '../../../core/models/rol';
           <p class="subtitle">Gestione el personal administrativo, recepcionistas y gerentes con acceso al PMS</p>
         </div>
         <button *ngIf="auth.esGerente()" class="btn-new" (click)="showForm = !showForm">
-          {{ showForm ? '✕ Cancelar Registro' : '➕ Nuevo Usuario' }}
+          <i class="bi" [class.bi-x-lg]="showForm" [class.bi-plus-lg]="!showForm"></i>
+          {{ showForm ? ' Cancelar Registro' : ' Nuevo Usuario' }}
         </button>
       </div>
 
       <!-- FORMULARIO GLASS CARD -->
       <div class="card glass-panel animate-in" *ngIf="showForm && auth.esGerente()">
         <div class="card-body">
-          <h3 class="form-title">📝 Registrar Nuevo Usuario</h3>
+          <h3 class="form-title"><i class="bi bi-person-lines-fill mr-2 text-dorado-amazonico"></i> Registrar Nuevo Usuario</h3>
           <p class="required-note">Complete la información de credenciales y datos personales del empleado.</p>
           
           <form (ngSubmit)="onCreate()" class="form">
@@ -63,7 +64,7 @@ import { RolResponse } from '../../../core/models/rol';
             
             <div class="form-actions">
               <button type="submit" class="btn-save">
-                💾 Guardar Ficha de Acceso
+                <i class="bi bi-save2-fill mr-1"></i> Guardar Ficha de Acceso
               </button>
             </div>
           </form>
@@ -72,6 +73,10 @@ import { RolResponse } from '../../../core/models/rol';
 
       <!-- TABLA DE CONTROL -->
       <div class="table-card glass-panel">
+        <div class="table-header-title">
+          <h3><i class="bi bi-people-fill text-verde-selva mr-1"></i> Personal Registrado</h3>
+          <span class="results-badge">{{ usuarios.length }} usuarios en el sistema</span>
+        </div>
         <div class="table-responsive">
           <table class="table">
             <thead>
@@ -86,17 +91,17 @@ import { RolResponse } from '../../../core/models/rol';
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let u of usuarios" class="table-row-hover">
-                <td class="codigo">🔑 {{ u.nombreUsuario }}</td>
+              <tr *ngFor="let u of usuariosPaginados" class="table-row-hover">
+                <td class="codigo"><i class="bi bi-key-fill text-dorado-amazonico mr-1"></i> {{ u.nombreUsuario }}</td>
                 <td class="bold-text">{{ u.nombres }} {{ u.apellidos }}</td>
                 <td>{{ u.correoElectronico }}</td>
                 <td>
-                  <span class="role-badge role-{{ u.rolNombre?.toLowerCase() }}">
+                  <span class="role-badge" [ngClass]="getRoleClass(u.rolNombre)">
                     {{ u.rolNombre }}
                   </span>
                 </td>
                 <td>
-                  <span class="status-badge" [class.activo]="u.estado?.toLowerCase() === 'activo' || !u.estado">
+                  <span class="status-badge" [class.activo]="u.estado.toLowerCase() === 'activo' || !u.estado">
                     {{ u.estado || 'ACTIVO' }}
                   </span>
                 </td>
@@ -113,6 +118,52 @@ import { RolResponse } from '../../../core/models/rol';
             </tbody>
           </table>
         </div>
+
+        <!-- PAGINACIÓN PREMIUM CON CONTROLES DE MARCA -->
+        <div class="paginator-container" *ngIf="usuarios.length > 0">
+          <div class="paginator-info">
+            Mostrando <b>{{ getRangoInicio() }} - {{ getRangoFin() }}</b> de <b>{{ usuarios.length }}</b> registros
+          </div>
+          <div class="paginator-controls">
+            <div class="page-size-selector">
+              <span>Mostrar:</span>
+              <select [(ngModel)]="elementosPorPagina" (change)="onPageSizeChange()" class="size-select">
+                <option [value]="5">5</option>
+                <option [value]="10">10</option>
+                <option [value]="20">20</option>
+                <option [value]="9999">Todos</option>
+              </select>
+            </div>
+            
+            <div class="pagination-buttons" *ngIf="totalPaginas > 1">
+              <button 
+                class="pag-btn" 
+                [disabled]="paginaActual === 1" 
+                (click)="cambiarPagina(paginaActual - 1)"
+              >
+                ◀ Ant
+              </button>
+              
+              <button 
+                *ngFor="let p of getPaginasArray()" 
+                class="pag-btn num-btn" 
+                [class.active]="p === paginaActual"
+                (click)="cambiarPagina(p)"
+              >
+                {{ p }}
+              </button>
+
+              <button 
+                class="pag-btn" 
+                [disabled]="paginaActual === totalPaginas" 
+                (click)="cambiarPagina(paginaActual + 1)"
+              >
+                Sig ▶
+              </button>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       <!-- MODAL DE EDICIÓN - SOLO GERENTE (ALINEACIÓN CROMÁTICA LUXURY Y SEGURIDAD) -->
@@ -120,7 +171,7 @@ import { RolResponse } from '../../../core/models/rol';
         <div class="modal-content animate-in">
           <div class="modal-header">
             <h3><i class="bi bi-pencil-square mr-1 text-dorado-amazonico"></i> Editar Usuario - {{ usuarioSeleccionado?.nombreUsuario }}</h3>
-            <button class="close-btn" (click)="cerrarModal()">✕</button>
+            <button class="close-btn" (click)="cerrarModal()"><i class="bi bi-x-lg"></i></button>
           </div>
           
           <form (ngSubmit)="guardarCambios()" class="modal-form">
@@ -387,6 +438,31 @@ import { RolResponse } from '../../../core/models/rol';
       margin-bottom: 24px;
     }
 
+    .table-header-title {
+      padding: 20px 24px;
+      border-bottom: 1px solid rgba(45, 90, 39, 0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #ffffff;
+    }
+
+    .table-header-title h3 {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #1A211B;
+    }
+
+    .results-badge {
+      font-size: 0.75rem;
+      background: rgba(78, 141, 70, 0.08);
+      color: #2D5A27;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-weight: 700;
+    }
+    
     .table-responsive {
       width: 100%;
       overflow-x: auto;
@@ -395,6 +471,7 @@ import { RolResponse } from '../../../core/models/rol';
     .table {
       width: 100%;
       border-collapse: collapse;
+      background: white;
     }
     
     .table th, .table td {
@@ -402,6 +479,7 @@ import { RolResponse } from '../../../core/models/rol';
       text-align: left;
       font-size: 0.88rem;
       border-bottom: 1px solid rgba(45, 90, 39, 0.05);
+      vertical-align: middle;
     }
     
     .table th {
@@ -431,6 +509,14 @@ import { RolResponse } from '../../../core/models/rol';
       font-weight: 800;
       color: #2D5A27;
       font-size: 0.88rem;
+    }
+    
+    .text-dorado-amazonico {
+      color: #d4a843;
+    }
+    
+    .text-verde-selva {
+      color: #2D5A27;
     }
 
     .access-date {
@@ -466,6 +552,18 @@ import { RolResponse } from '../../../core/models/rol';
       background: rgba(139, 90, 43, 0.08);
       color: #8B5A2B;
       border: 1px solid rgba(139, 90, 43, 0.15);
+    }
+
+    .role-badge.role-asistente {
+      background: rgba(217, 119, 6, 0.08);
+      color: #b45309;
+      border: 1px solid rgba(217, 119, 6, 0.15);
+    }
+
+    .role-badge.role-default {
+      background: rgba(100, 116, 139, 0.08);
+      color: #475569;
+      border: 1px solid rgba(100, 116, 139, 0.15);
     }
 
     /* STATUS BADGE */
@@ -618,6 +716,98 @@ import { RolResponse } from '../../../core/models/rol';
       color: #d4a843;
     }
 
+    /* PAGINACIÓN BOUTIQUE */
+    .paginator-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      background: white;
+      border-top: 1px solid rgba(45, 90, 39, 0.08);
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .paginator-info {
+      font-size: 0.85rem;
+      color: #64748b;
+    }
+
+    .paginator-info b {
+      color: #1A211B;
+    }
+
+    .paginator-controls {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .page-size-selector {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      color: #64748b;
+    }
+
+    .size-select {
+      padding: 6px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      background: white;
+      color: #1A211B;
+      font-weight: 600;
+      cursor: pointer;
+      outline: none;
+      font-family: inherit;
+    }
+
+    .size-select:focus {
+      border-color: #2D5A27;
+    }
+
+    .pagination-buttons {
+      display: flex;
+      gap: 4px;
+    }
+
+    .pag-btn {
+      padding: 6px 12px;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      color: #64748b;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+
+    .pag-btn:hover:not(:disabled) {
+      background: rgba(45, 90, 39, 0.05);
+      color: #2D5A27;
+      border-color: #2D5A27;
+    }
+
+    .pag-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .pag-btn.num-btn {
+      min-width: 36px;
+      padding: 6px;
+    }
+
+    .pag-btn.active {
+      background: linear-gradient(135deg, #2D5A27 0%, #1A211B 100%);
+      color: white;
+      border-color: transparent;
+      box-shadow: 0 4px 10px rgba(45, 90, 39, 0.15);
+    }
+
     /* ANIMATIONS */
     .fade-in {
       animation: fadeIn 0.4s ease-out forwards;
@@ -640,6 +830,7 @@ import { RolResponse } from '../../../core/models/rol';
 })
 export class UsuarioListComponent implements OnInit {
   usuarios: UsuarioResponse[] = [];
+  usuariosPaginados: UsuarioResponse[] = [];
   roles: RolResponse[] = [];
   showForm = false;
 
@@ -654,6 +845,11 @@ export class UsuarioListComponent implements OnInit {
     nombres: '', apellidos: '', correoElectronico: '', estado: 'activo'
   };
 
+  // Paginación
+  elementosPorPagina: number = 10;
+  paginaActual: number = 1;
+  totalPaginas: number = 1;
+
   constructor(
     private service: UsuarioService,
     private rolService: RolService,
@@ -666,7 +862,21 @@ export class UsuarioListComponent implements OnInit {
   }
 
   cargarUsuarios(): void {
-    this.service.getAll().subscribe({ next: (data) => this.usuarios = data });
+    this.service.getAll().subscribe({ next: (data) => {
+      this.usuarios = data;
+      this.paginaActual = 1;
+      this.actualizarPaginacion();
+    }});
+  }
+
+  getRoleClass(rolNombre: string): string {
+    if (!rolNombre) return 'role-default';
+    const nombre = rolNombre.toLowerCase();
+    if (nombre.includes('gerente')) return 'role-gerente';
+    if (nombre.includes('admin')) return 'role-admin';
+    if (nombre.includes('recepcion')) return 'role-recepcionista';
+    if (nombre.includes('asistente') || nombre.includes('limpieza')) return 'role-asistente';
+    return 'role-default';
   }
 
   onCreate(): void {
@@ -716,5 +926,59 @@ export class UsuarioListComponent implements OnInit {
         this.guardando = false;
       }
     });
+  }
+
+  // MÉTODOS DE PAGINACIÓN
+  actualizarPaginacion(): void {
+    this.totalPaginas = Math.ceil(this.usuarios.length / this.elementosPorPagina) || 1;
+    if (this.paginaActual > this.totalPaginas) {
+      this.paginaActual = this.totalPaginas;
+    }
+    
+    const inicio = (this.paginaActual - 1) * this.elementosPorPagina;
+    const fin = inicio + parseInt(this.elementosPorPagina.toString());
+    
+    this.usuariosPaginados = this.usuarios.slice(inicio, fin);
+  }
+
+  cambiarPagina(pagina: number): void {
+    if (pagina >= 1 && pagina <= this.totalPaginas) {
+      this.paginaActual = pagina;
+      this.actualizarPaginacion();
+      
+      const table = document.querySelector('.table-card');
+      if (table) {
+        table.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+  }
+
+  onPageSizeChange(): void {
+    this.paginaActual = 1;
+    this.actualizarPaginacion();
+  }
+
+  getRangoInicio(): number {
+    if (this.usuarios.length === 0) return 0;
+    return (this.paginaActual - 1) * this.elementosPorPagina + 1;
+  }
+
+  getRangoFin(): number {
+    return Math.min(this.paginaActual * this.elementosPorPagina, this.usuarios.length);
+  }
+
+  getPaginasArray(): number[] {
+    const arr = [];
+    let start = Math.max(1, this.paginaActual - 2);
+    let end = Math.min(this.totalPaginas, start + 4);
+    
+    if (end - start < 4) {
+      start = Math.max(1, end - 4);
+    }
+    
+    for (let i = start; i <= end; i++) {
+      arr.push(i);
+    }
+    return arr;
   }
 }

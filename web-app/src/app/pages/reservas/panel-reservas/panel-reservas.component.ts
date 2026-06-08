@@ -6,6 +6,7 @@ import { ReservaService } from '../../../core/services/reserva.service';
 import { PagoService } from '../../../core/services/pago.service';
 import { ExcelReportService, ItemExcelReport } from '../../../core/services/excel-report.service';
 import { PanelReservaItem, ExtenderReservaRequest, ExtenderGrupoRequest, CancelarReservaRequest, CancelarGrupoRequest } from '../../../core/models/reserva';
+import { AuthService } from '../../../core/services/auth.service';
 import { MatInputModule } from '@angular/material/input';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
@@ -1350,7 +1351,8 @@ export class PanelReservasComponent implements OnInit {
   constructor(
     private service: ReservaService,
     private pagoService: PagoService,
-    private excelService: ExcelReportService
+    private excelService: ExcelReportService,
+    private authService: AuthService
   ) { }
 
   ngOnInit(): void {
@@ -1489,7 +1491,7 @@ export class PanelReservasComponent implements OnInit {
       this.cancelForm.motivoCancelacion = motivo;
 
       if (esGrupo) {
-        const userId = localStorage.getItem('userId') || '';
+        const userId = this.authService.getUsuario()?.id || '';
         this.service.cancelarGrupo(this.modalItem.id, this.cancelForm, userId).subscribe({
           next: () => { this.cerrarModal(); this.loadPanel(); },
           error: () => { this.modalGuardando = false; }

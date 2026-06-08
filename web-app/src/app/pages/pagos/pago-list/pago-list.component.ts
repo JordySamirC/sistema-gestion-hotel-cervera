@@ -105,7 +105,7 @@ import { PagoResponse } from '../../../core/models/pago';
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let p of filteredPagos" class="table-row-hover">
+              <tr *ngFor="let p of pagosPaginados" class="table-row-hover">
                 <td class="col-comprobante codigo-cell">{{ p.comprobanteNumero }}</td>
                 <td class="col-fecha fecha-cell">{{ p.fechaPago | date:'dd/MM/yyyy HH:mm' }}</td>
                 <td class="col-cliente"><span class="fw-600">{{ p.clienteNombre || p.clienteRazonSocial }}</span></td>
@@ -147,6 +147,52 @@ import { PagoResponse } from '../../../core/models/pago';
             </tfoot>
           </table>
         </div>
+        
+        <!-- PAGINACIÓN PREMIUM CON CONTROLES DE MARCA -->
+        <div class="paginator-container" *ngIf="filteredPagos.length > 0">
+          <div class="paginator-info">
+            Mostrando <b>{{ getRangoInicio() }} - {{ getRangoFin() }}</b> de <b>{{ filteredPagos.length }}</b> registros
+          </div>
+          <div class="paginator-controls">
+            <div class="page-size-selector">
+              <span>Mostrar:</span>
+              <select [(ngModel)]="elementosPorPagina" (change)="onPageSizeChange()" class="size-select">
+                <option [value]="5">5</option>
+                <option [value]="10">10</option>
+                <option [value]="20">20</option>
+                <option [value]="9999">Todos</option>
+              </select>
+            </div>
+            
+            <div class="pagination-buttons" *ngIf="totalPaginas > 1">
+              <button 
+                class="pag-btn" 
+                [disabled]="paginaActual === 1" 
+                (click)="cambiarPagina(paginaActual - 1)"
+              >
+                ◀ Ant
+              </button>
+              
+              <button 
+                *ngFor="let p of getPaginasArray()" 
+                class="pag-btn num-btn" 
+                [class.active]="p === paginaActual"
+                (click)="cambiarPagina(p)"
+              >
+                {{ p }}
+              </button>
+
+              <button 
+                class="pag-btn" 
+                [disabled]="paginaActual === totalPaginas" 
+                (click)="cambiarPagina(paginaActual + 1)"
+              >
+                Sig ▶
+              </button>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   `,
@@ -588,6 +634,98 @@ import { PagoResponse } from '../../../core/models/pago';
       font-weight: 600;
     }
 
+    /* PAGINACIÓN BOUTIQUE */
+    .paginator-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      background: white;
+      border-top: 1px solid rgba(45, 90, 39, 0.08);
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .paginator-info {
+      font-size: 0.85rem;
+      color: #64748b;
+    }
+
+    .paginator-info b {
+      color: #1A211B;
+    }
+
+    .paginator-controls {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .page-size-selector {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      color: #64748b;
+    }
+
+    .size-select {
+      padding: 6px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      background: white;
+      color: #1A211B;
+      font-weight: 600;
+      cursor: pointer;
+      outline: none;
+      font-family: inherit;
+    }
+
+    .size-select:focus {
+      border-color: #2D5A27;
+    }
+
+    .pagination-buttons {
+      display: flex;
+      gap: 4px;
+    }
+
+    .pag-btn {
+      padding: 6px 12px;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      color: #64748b;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+
+    .pag-btn:hover:not(:disabled) {
+      background: rgba(45, 90, 39, 0.05);
+      color: #2D5A27;
+      border-color: #2D5A27;
+    }
+
+    .pag-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .pag-btn.num-btn {
+      min-width: 36px;
+      padding: 6px;
+    }
+
+    .pag-btn.active {
+      background: linear-gradient(135deg, #2D5A27 0%, #1A211B 100%);
+      color: white;
+      border-color: transparent;
+      box-shadow: 0 4px 10px rgba(45, 90, 39, 0.15);
+    }
+
     .fade-in {
       animation: fadeIn 0.4s ease-out forwards;
     }
@@ -601,6 +739,7 @@ import { PagoResponse } from '../../../core/models/pago';
 export class PagoListComponent implements OnInit {
   pagos: PagoResponse[] = [];
   filteredPagos: PagoResponse[] = [];
+  pagosPaginados: PagoResponse[] = [];
   searchTerm: string = '';
   fechaDesde: string = '';
   fechaHasta: string = '';
@@ -610,6 +749,11 @@ export class PagoListComponent implements OnInit {
   totalNetoFiltered: number = 0;
   countBoletas: number = 0;
   countFacturas: number = 0;
+
+  // Paginación
+  elementosPorPagina: number = 10;
+  paginaActual: number = 1;
+  totalPaginas: number = 1;
 
   constructor(
     private service: PagoService,
@@ -670,6 +814,8 @@ export class PagoListComponent implements OnInit {
     });
 
     this.updateFilteredTotals();
+    this.paginaActual = 1;
+    this.actualizarPaginacion();
   }
 
   resetFilters(): void {
@@ -688,6 +834,60 @@ export class PagoListComponent implements OnInit {
     if (m === 'TARJETA') return 'bi bi-credit-card text-sky-600';
     if (m === 'TRANSFERENCIA') return 'bi bi-bank text-amber-600';
     return 'bi bi-wallet2 text-slate-500';
+  }
+
+  // MÉTODOS DE PAGINACIÓN
+  actualizarPaginacion(): void {
+    this.totalPaginas = Math.ceil(this.filteredPagos.length / this.elementosPorPagina) || 1;
+    if (this.paginaActual > this.totalPaginas) {
+      this.paginaActual = this.totalPaginas;
+    }
+    
+    const inicio = (this.paginaActual - 1) * this.elementosPorPagina;
+    const fin = inicio + parseInt(this.elementosPorPagina.toString());
+    
+    this.pagosPaginados = this.filteredPagos.slice(inicio, fin);
+  }
+
+  cambiarPagina(pagina: number): void {
+    if (pagina >= 1 && pagina <= this.totalPaginas) {
+      this.paginaActual = pagina;
+      this.actualizarPaginacion();
+      
+      const table = document.querySelector('.table-card');
+      if (table) {
+        table.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+  }
+
+  onPageSizeChange(): void {
+    this.paginaActual = 1;
+    this.actualizarPaginacion();
+  }
+
+  getRangoInicio(): number {
+    if (this.filteredPagos.length === 0) return 0;
+    return (this.paginaActual - 1) * this.elementosPorPagina + 1;
+  }
+
+  getRangoFin(): number {
+    return Math.min(this.paginaActual * this.elementosPorPagina, this.filteredPagos.length);
+  }
+
+  getPaginasArray(): number[] {
+    const arr = [];
+    let start = Math.max(1, this.paginaActual - 2);
+    let end = Math.min(this.totalPaginas, start + 4);
+    
+    if (end - start < 4) {
+      start = Math.max(1, end - 4);
+    }
+    
+    for (let i = start; i <= end; i++) {
+      arr.push(i);
+    }
+    return arr;
   }
 
   exportarExcel(): void {
