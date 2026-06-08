@@ -8,6 +8,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 @Table(name = "usuarios")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
@@ -23,6 +25,7 @@ public class Usuario {
     @Column(name = "correo_electronico", nullable = false, unique = true, length = 100)
     private String correoElectronico;
 
+    @JsonIgnore
     @Column(name = "contrasena_hash", nullable = false, length = 255)
     private String contrasenaHash;
 

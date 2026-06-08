@@ -6,7 +6,11 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "pagos")
@@ -99,11 +103,13 @@ public class Pago {
     @Column(name = "grupo_id")
     private UUID grupoId;
 
-    @ManyToMany
+    @JsonIgnore
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
-        name = "pago_estadias",
+        name = "pagos_estadia",
         joinColumns = @JoinColumn(name = "pago_id"),
         inverseJoinColumns = @JoinColumn(name = "estadia_id")
     )
-    private java.util.List<Estadia> estadias;
+    @Builder.Default
+    private List<Estadia> estadias = new ArrayList<>();
 }

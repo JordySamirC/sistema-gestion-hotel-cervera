@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 @Entity
 @Table(name = "reservas")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
@@ -78,6 +80,7 @@ public class Reserva {
     @Column(name = "fecha_actualizacion")
     private OffsetDateTime fechaActualizacion;
 
+    @JsonManagedReference
     @OneToMany(mappedBy = "reserva", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<ReservaDetalle> detalles = new ArrayList<>();
@@ -86,6 +89,7 @@ public class Reserva {
     @JoinColumn(name = "grupo_id")
     private Grupo grupo;
 
+    @JsonManagedReference
     @OneToMany(mappedBy = "reserva")
     private List<Estadia> estadias;
 }

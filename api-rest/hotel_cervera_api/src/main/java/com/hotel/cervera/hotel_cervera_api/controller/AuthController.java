@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -62,7 +63,38 @@ public class AuthController {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Autenticación fallida")
     })
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
-        return ResponseEntity.ok(authService.login(request));
+        LoginResponse response = authService.login(request);
+        
+        org.springframework.http.ResponseCookie cookie = org.springframework.http.ResponseCookie.from("auth_token", response.getToken())
+                .httpOnly(true)
+                .secure(false) // Temporarily false until TLS is implemented (F-001)
+                .path("/")
+                .maxAge(24 * 60 * 60)
+                .sameSite("Strict")
+                .build();
+                
+        // Return without token in body for security
+        response.setToken(null);
+        
+        return ResponseEntity.ok()
+                .header(org.springframework.http.HttpHeaders.SET_COOKIE, cookie.toString())
+                .body(response);
+    }
+    
+    @PostMapping("/logout")
+    @Operation(summary = "Cerrar sesión", description = "Elimina la cookie JWT")
+    public ResponseEntity<Void> logout() {
+        org.springframework.http.ResponseCookie cookie = org.springframework.http.ResponseCookie.from("auth_token", "")
+                .httpOnly(true)
+                .secure(false) // Temporarily false until TLS is implemented
+                .path("/")
+                .maxAge(0)
+                .sameSite("Strict")
+                .build();
+                
+        return ResponseEntity.ok()
+                .header(org.springframework.http.HttpHeaders.SET_COOKIE, cookie.toString())
+                .build();
     }
 
     @PostMapping("/forgot-password")
@@ -139,55 +171,7 @@ public class AuthController {
         ));
     }
 
-    @GetMapping("/diagnostico")
-    public Map<String, Object> diagnostic() {
-        Map<String, Object> result = new LinkedHashMap<>();
 
-        try (Connection conn = dataSource.getConnection()) {
-            DatabaseMetaData meta = conn.getMetaData();
-            result.put("driverName", meta.getDriverName());
-            result.put("driverVersion", meta.getDriverVersion());
-            result.put("dbProductVersion", meta.getDatabaseProductVersion());
-            result.put("dbMajorVersion", meta.getDatabaseMajorVersion());
-            result.put("dbMinorVersion", meta.getDatabaseMinorVersion());
-            result.put("jdbcUrl", meta.getURL());
-            result.put("catalog", conn.getCatalog());
-            result.put("schema", conn.getSchema());
-        } catch (Exception e) {
-            result.put("jdbcError", e.getMessage());
-        }
-
-        List<Map<String, Object>> usuarios = new ArrayList<>();
-        try (Connection conn = dataSource.getConnection();
-             Statement stmt = conn.createStatement();
-              ResultSet rs = stmt.executeQuery(
-                  "SELECT u.id, u.nombre_usuario, u.estado, u.correo_electronico, r.nombre AS rol " +
-                  "FROM usuarios u JOIN roles r ON r.id = u.rol_id " +
-                  "ORDER BY u.nombre_usuario")) {
-            while (rs.next()) {
-                Map<String, Object> u = new LinkedHashMap<>();
-                u.put("id", rs.getString("id"));
-                u.put("nombre_usuario", rs.getString("nombre_usuario"));
-                u.put("estado", rs.getString("estado"));
-                u.put("correoElectronico", rs.getString("correo_electronico"));
-                u.put("rol", rs.getString("rol"));
-                usuarios.add(u);
-            }
-        } catch (Exception e) {
-            result.put("usuariosError", e.getMessage());
-        }
-        result.put("usuarios", usuarios);
-
-        try {
-            Long count = (Long) entityManager.createQuery(
-                "SELECT COUNT(u) FROM Usuario u").getSingleResult();
-            result.put("totalUsuariosJPA", count);
-        } catch (Exception e) {
-            result.put("totalUsuariosJPAError", e.getMessage());
-        }
-
-        return result;
-    }
 
     private String hashToken(String token) {
         try {

@@ -26,9 +26,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -52,14 +50,16 @@ public class ReservaService {
         for (Reserva reserva : inasistencias) {
             reserva.setEstado("CANCELADA");
             reserva.setMotivoCancelacion("Inasistencia");
-            reserva.setObservacionesCancelacion("Inasistencia automática - Check-in no realizado en la fecha programada.");
+            reserva.setObservacionesCancelacion(
+                    "Inasistencia automática - Check-in no realizado en la fecha programada.");
             reserva.setFechaCancelacion(LocalDateTime.now());
             reservaRepository.save(reserva);
 
             for (ReservaDetalle detalle : reserva.getDetalles()) {
                 Habitacion habitacion = habitacionRepository.findById(detalle.getHabitacion().getId())
                         .orElseThrow(() -> new BusinessException("Habitación no encontrada"));
-                if ("Por limpiar".equals(habitacion.getEstadoActual()) || "Reservada".equals(habitacion.getEstadoActual())) {
+                if ("Por limpiar".equals(habitacion.getEstadoActual())
+                        || "Reservada".equals(habitacion.getEstadoActual())) {
                     habitacion.setEstadoActual("Disponible");
                     habitacionRepository.save(habitacion);
                 }
@@ -175,10 +175,11 @@ public class ReservaService {
 
         if (request.getHuespedesIds() != null) {
             for (UUID huespedId : request.getHuespedesIds()) {
-                if (huespedId.equals(request.getClienteId())) continue;
+                if (huespedId.equals(request.getClienteId()))
+                    continue;
                 Cliente huespedCliente = clienteRepository.findById(huespedId)
                         .orElseThrow(() -> new ResourceNotFoundException("Cliente", huespedId));
-                
+
                 // Evitamos duplicidad por si acaso
                 boolean yaExiste = huespedRepository.findByReservaId(reserva.getId()).stream()
                         .anyMatch(h -> h.getCliente().getId().equals(huespedId));
@@ -339,7 +340,8 @@ public class ReservaService {
             Integer capacidadMax = detalle.getHabitacion().getTipo().getCapacidadMax();
             long huespedesActuales = huespedRepository.countByReservaId(reservaId);
             if (huespedesActuales >= capacidadMax) {
-                throw new BusinessException("La habitación ha alcanzado su capacidad máxima de " + capacidadMax + " huéspedes");
+                throw new BusinessException(
+                        "La habitación ha alcanzado su capacidad máxima de " + capacidadMax + " huéspedes");
             }
         }
 
@@ -364,7 +366,8 @@ public class ReservaService {
                 .reservaId(huesped.getReserva().getId())
                 .clienteId(huesped.getCliente().getId())
                 .clienteNombre(huesped.getCliente().getNombres() + " " + huesped.getCliente().getApellidos())
-                .clienteDocumento(huesped.getCliente().getTipoDocumento() + ": " + huesped.getCliente().getNumeroDocumento())
+                .clienteDocumento(
+                        huesped.getCliente().getTipoDocumento() + ": " + huesped.getCliente().getNumeroDocumento())
                 .esTitular(huesped.getEsTitular())
                 .fechaCreacion(huesped.getFechaCreacion())
                 .build();
@@ -408,7 +411,8 @@ public class ReservaService {
         boolean disponible = reservaRepository.isHabitacionDisponibleParaReserva(
                 nuevaHabitacion.getId(), reserva.getFechaIngreso(), reserva.getFechaSalida(), reservaId);
         if (!disponible) {
-            throw new BusinessException("La habitación " + nuevaHabitacion.getNumero() + " no está disponible en las fechas de la reserva");
+            throw new BusinessException(
+                    "La habitación " + nuevaHabitacion.getNumero() + " no está disponible en las fechas de la reserva");
         }
 
         if (reserva.getDetalles() == null || reserva.getDetalles().isEmpty()) {
@@ -443,7 +447,8 @@ public class ReservaService {
 
     private ReservaResponse toResponse(Reserva reserva) {
         long noches = ChronoUnit.DAYS.between(reserva.getFechaIngreso(), reserva.getFechaSalida());
-        if (noches < 1) noches = 1;
+        if (noches < 1)
+            noches = 1;
         BigDecimal precioTotal = BigDecimal.ZERO;
         if (reserva.getDetalles() != null) {
             for (ReservaDetalle d : reserva.getDetalles()) {
@@ -478,19 +483,19 @@ public class ReservaService {
                 .canalVentaOtro(reserva.getCanalVentaOtro())
                 .fechaCreacion(reserva.getFechaCreacion())
                 .fechaActualizacion(reserva.getFechaActualizacion())
-                .detalles(reserva.getDetalles() != null 
+                .detalles(reserva.getDetalles() != null
                         ? reserva.getDetalles().stream()
-                            .map(d -> ReservaDetalleResponse.builder()
-                                    .id(d.getId())
-                                    .reservaId(d.getReserva().getId())
-                                    .habitacionId(d.getHabitacion().getId())
-                                    .habitacionNumero(d.getHabitacion().getNumero())
-                                    .tipoNombre(d.getHabitacion().getTipo().getNombre())
-                                    .capacidadMax(d.getHabitacion().getTipo().getCapacidadMax())
-                                    .precioAplicado(d.getPrecioAplicado())
-                                    .fechaCreacion(d.getFechaCreacion())
-                                    .build())
-                            .toList()
+                                .map(d -> ReservaDetalleResponse.builder()
+                                        .id(d.getId())
+                                        .reservaId(d.getReserva().getId())
+                                        .habitacionId(d.getHabitacion().getId())
+                                        .habitacionNumero(d.getHabitacion().getNumero())
+                                        .tipoNombre(d.getHabitacion().getTipo().getNombre())
+                                        .capacidadMax(d.getHabitacion().getTipo().getCapacidadMax())
+                                        .precioAplicado(d.getPrecioAplicado())
+                                        .fechaCreacion(d.getFechaCreacion())
+                                        .build())
+                                .toList()
                         : List.of())
                 .grupoId(reserva.getGrupo() != null ? reserva.getGrupo().getId() : null)
                 .nombreGrupo(reserva.getGrupo() != null ? reserva.getGrupo().getNombreGrupo() : null)
@@ -506,7 +511,8 @@ public class ReservaService {
                         .reservaId(h.getReserva().getId())
                         .clienteId(h.getCliente().getId())
                         .clienteNombre(h.getCliente().getNombres() + " " + h.getCliente().getApellidos())
-                        .clienteDocumento(h.getCliente().getTipoDocumento() + ": " + h.getCliente().getNumeroDocumento())
+                        .clienteDocumento(
+                                h.getCliente().getTipoDocumento() + ": " + h.getCliente().getNumeroDocumento())
                         .esTitular(h.getEsTitular())
                         .fechaCreacion(h.getFechaCreacion())
                         .build())
@@ -518,7 +524,8 @@ public class ReservaService {
                     .reservaId(reserva.getId())
                     .clienteId(reserva.getCliente().getId())
                     .clienteNombre(reserva.getCliente().getNombres() + " " + reserva.getCliente().getApellidos())
-                    .clienteDocumento(reserva.getCliente().getTipoDocumento() + ": " + reserva.getCliente().getNumeroDocumento())
+                    .clienteDocumento(
+                            reserva.getCliente().getTipoDocumento() + ": " + reserva.getCliente().getNumeroDocumento())
                     .esTitular(true)
                     .fechaCreacion(reserva.getFechaCreacion())
                     .build());
@@ -535,7 +542,8 @@ public class ReservaService {
 
         for (Reserva r : individuales) {
             long noches = ChronoUnit.DAYS.between(r.getFechaIngreso(), r.getFechaSalida());
-            if (noches < 1) noches = 1;
+            if (noches < 1)
+                noches = 1;
             BigDecimal precioTotal = BigDecimal.ZERO;
             String habitacionNumero = null;
             if (r.getDetalles() != null && !r.getDetalles().isEmpty()) {
@@ -568,9 +576,10 @@ public class ReservaService {
                         .findFirst()
                         .map(hue -> hue.getCliente().getNombres() + " " + hue.getCliente().getApellidos())
                         .orElse(h.getCliente().getNombres() + " " + h.getCliente().getApellidos());
-                
+
                 long noches = ChronoUnit.DAYS.between(h.getFechaIngreso(), h.getFechaSalida());
-                if (noches < 1) noches = 1;
+                if (noches < 1)
+                    noches = 1;
                 BigDecimal precioHija = BigDecimal.ZERO;
                 String habitacionNumero = null;
                 if (h.getDetalles() != null && !h.getDetalles().isEmpty()) {
@@ -618,7 +627,8 @@ public class ReservaService {
 
         resultado.sort((a, b) -> {
             int cmp = b.getFechaIngreso().compareTo(a.getFechaIngreso());
-            if (cmp != 0) return cmp;
+            if (cmp != 0)
+                return cmp;
             return a.getCodigo().compareTo(b.getCodigo());
         });
 
@@ -634,8 +644,10 @@ public class ReservaService {
             throw new BusinessException("Solo se pueden modificar reservas en estado 'RESERVADA'");
         }
 
-        LocalDate nuevaFechaIngreso = request.getFechaIngreso() != null ? request.getFechaIngreso() : reserva.getFechaIngreso();
-        LocalDate nuevaFechaSalida = request.getFechaSalida() != null ? request.getFechaSalida() : reserva.getFechaSalida();
+        LocalDate nuevaFechaIngreso = request.getFechaIngreso() != null ? request.getFechaIngreso()
+                : reserva.getFechaIngreso();
+        LocalDate nuevaFechaSalida = request.getFechaSalida() != null ? request.getFechaSalida()
+                : reserva.getFechaSalida();
 
         if (nuevaFechaSalida.isBefore(nuevaFechaIngreso) || nuevaFechaSalida.equals(nuevaFechaIngreso)) {
             throw new BusinessException("La fecha de salida debe ser posterior a la fecha de ingreso");
@@ -658,8 +670,10 @@ public class ReservaService {
         reserva.setFechaIngreso(nuevaFechaIngreso);
         reserva.setFechaSalida(nuevaFechaSalida);
 
-        if (request.getAdultos() != null) reserva.setAdultos(request.getAdultos());
-        if (request.getNinos() != null) reserva.setNinos(request.getNinos());
+        if (request.getAdultos() != null)
+            reserva.setAdultos(request.getAdultos());
+        if (request.getNinos() != null)
+            reserva.setNinos(request.getNinos());
 
         reserva = reservaRepository.save(reserva);
         return toResponse(reserva);
@@ -695,20 +709,28 @@ public class ReservaService {
     }
 
     private String calcularEstadoGrupo(List<PanelReservaItem> hijas) {
-        if (hijas == null || hijas.isEmpty()) return "CANCELADO";
+        if (hijas == null || hijas.isEmpty())
+            return "CANCELADO";
 
         long total = hijas.size();
-        long canceladas = hijas.stream().filter(r -> "CANCELADA".equals(r.getEstado()) || "CANCELADO".equals(r.getEstado())).count();
+        long canceladas = hijas.stream()
+                .filter(r -> "CANCELADA".equals(r.getEstado()) || "CANCELADO".equals(r.getEstado())).count();
         long finalizados = hijas.stream().filter(r -> "FINALIZADO".equals(r.getEstado())).count();
         long hospedados = hijas.stream().filter(r -> "HOSPEDADO".equals(r.getEstado())).count();
         long reservadas = hijas.stream().filter(r -> "RESERVADA".equals(r.getEstado())).count();
 
-        if (canceladas == total) return "CANCELADO";
-        if (hospedados > 0) return "ACTIVO";
-        if (finalizados == total) return "FINALIZADO";
-        if (finalizados + canceladas == total && finalizados > 0) return "FINALIZADO";
-        if (reservadas == total) return "RESERVADA";
-        if (reservadas > 0 && canceladas > 0) return "RESERVADA";
+        if (canceladas == total)
+            return "CANCELADO";
+        if (hospedados > 0)
+            return "ACTIVO";
+        if (finalizados == total)
+            return "FINALIZADO";
+        if (finalizados + canceladas == total && finalizados > 0)
+            return "FINALIZADO";
+        if (reservadas == total)
+            return "RESERVADA";
+        if (reservadas > 0 && canceladas > 0)
+            return "RESERVADA";
         return "RESERVADA";
     }
 }

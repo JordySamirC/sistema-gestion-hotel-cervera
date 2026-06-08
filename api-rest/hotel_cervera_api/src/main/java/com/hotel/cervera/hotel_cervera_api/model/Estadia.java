@@ -9,6 +9,8 @@ import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 @Entity
 @Table(name = "estadias")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
@@ -18,6 +20,7 @@ public class Estadia {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reserva_id", nullable = false)
     private Reserva reserva;

@@ -61,6 +61,7 @@ public class AuthService {
                 .nombres(usuario.getNombres())
                 .apellidos(usuario.getApellidos())
                 .rol(usuario.getRol().getNombre())
+                .rolId(usuario.getRol().getId())
                 .build();
     }
 }

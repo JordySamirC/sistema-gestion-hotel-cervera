@@ -8,6 +8,8 @@ import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 @Entity
 @Table(name = "reservas_detalle", uniqueConstraints = {
     @UniqueConstraint(columnNames = {"reserva_id", "habitacion_id"})
@@ -19,6 +21,7 @@ public class ReservaDetalle {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reserva_id", nullable = false)
     private Reserva reserva;
