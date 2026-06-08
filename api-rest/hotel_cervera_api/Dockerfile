@@ -28,16 +28,10 @@ RUN mkdir -p /app/logs && chown -R hotelapp:hotelapp /app
 # Cambiar al usuario no-root
 USER hotelapp
 
+# Configurar zona horaria (opcional pero recomendado)
+ENV TZ=America/Lima
+
 EXPOSE 8080
 
-# Leer Docker Secrets desde archivos /run/secrets/ antes de lanzar el JAR
-ENTRYPOINT ["sh", "-c", "\
-  export DB_PASSWORD=$(cat /run/secrets/db_password) && \
-  export JWT_SECRET=$(cat /run/secrets/jwt_secret) && \
-  export BREVO_API_KEY=$(cat /run/secrets/brevo_api_key) && \
-  java -Xms256m -Xmx512m \
-  -Dspring.config.import= \
-  -Dspring.datasource.password=${DB_PASSWORD} \
-  -Djwt.secret=${JWT_SECRET} \
-  -Dbrevo.api-key=${BREVO_API_KEY} \
-  -jar app.jar"]
+# Iniciar la aplicación usando variables de entorno inyectadas por Render
+ENTRYPOINT ["sh", "-c", "java -Xms256m -Xmx512m -jar app.jar"]
