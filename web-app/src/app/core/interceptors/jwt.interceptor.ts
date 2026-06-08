@@ -7,13 +7,9 @@ import { catchError, throwError } from 'rxjs';
 export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
   const router = inject(Router);
-  const token = authService.getToken();
-
-  if (token) {
-    req = req.clone({
-      setHeaders: { Authorization: `Bearer ${token}` }
-    });
-  }
+  req = req.clone({
+    withCredentials: true
+  });
 
   return next(req).pipe(
     catchError((err) => {

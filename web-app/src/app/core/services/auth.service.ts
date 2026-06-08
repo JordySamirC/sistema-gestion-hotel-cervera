@@ -13,22 +13,22 @@ export class AuthService {
   constructor(private http: HttpClient) {}
 
   login(request: LoginRequest): Observable<LoginResponse> {
-    console.log('Login request payload:', JSON.stringify(request));
     return this.http.post<LoginResponse>(`${this.apiUrl}/login`, request).pipe(
       tap((res) => {
-        localStorage.setItem(this.tokenKey, res.token);
         localStorage.setItem(this.userKey, JSON.stringify(res));
       })
     );
   }
 
   logout(): void {
-    localStorage.removeItem(this.tokenKey);
-    localStorage.removeItem(this.userKey);
-  }
-
-  getToken(): string | null {
-    return localStorage.getItem(this.tokenKey);
+    this.http.post(`${this.apiUrl}/logout`, {}).subscribe({
+      next: () => {
+        localStorage.removeItem(this.userKey);
+      },
+      error: () => {
+        localStorage.removeItem(this.userKey);
+      }
+    });
   }
 
   getUsuario(): LoginResponse | null {
@@ -37,11 +37,15 @@ export class AuthService {
   }
 
   isLoggedIn(): boolean {
-    return !!this.getToken();
+    return !!this.getUsuario();
   }
 
   getRol(): string | null {
     return this.getUsuario()?.rol ?? null;
+  }
+
+  getRolId(): string | null {
+    return this.getUsuario()?.rolId ?? null;
   }
 
   esGerente(): boolean {

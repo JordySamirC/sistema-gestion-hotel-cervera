@@ -558,7 +558,11 @@ export class LoginComponent {
 
     this.auth.login({ correoElectronico: this.email, contrasena: this.password }).subscribe({
       next: () => {
-        this.router.navigate(['/panel']);
+        if (this.auth.esLimpieza()) {
+          this.router.navigate(['/limpieza']);
+        } else {
+          this.router.navigate(['/panel']);
+        }
       },
       error: (err) => {
         this.loading = false;

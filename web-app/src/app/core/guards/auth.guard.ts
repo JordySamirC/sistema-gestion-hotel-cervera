@@ -25,3 +25,15 @@ export const gerenteGuard: CanActivateFn = () => {
   router.navigate(['/panel']);
   return false;
 };
+
+export const noLimpiezaGuard: CanActivateFn = () => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+
+  if (authService.isLoggedIn() && authService.esLimpieza()) {
+    router.navigate(['/limpieza']);
+    return false;
+  }
+
+  return true;
+};

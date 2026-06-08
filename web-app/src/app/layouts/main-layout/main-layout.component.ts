@@ -4,6 +4,7 @@ import { SidebarComponent } from '../sidebar/sidebar.component';
 import { HeaderComponent } from '../header/header.component';
 import { UiService } from '../../core/services/ui.service';
 import { CommonModule } from '@angular/common';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-main-layout',
@@ -26,7 +27,7 @@ import { CommonModule } from '@angular/common';
       </div>
 
       <!-- Barra de Navegación Inferior (Bottom Tab Bar) exclusiva para celulares -->
-      <nav class="bottom-nav">
+      <nav class="bottom-nav" *ngIf="!authService.esLimpieza()">
         <a routerLink="/panel" routerLinkActive="active" class="bottom-nav-item">
           <i class="bi bi-grid-1x2-fill"></i>
           <span>Panel</span>
@@ -170,7 +171,7 @@ import { CommonModule } from '@angular/common';
   `]
 })
 export class MainLayoutComponent {
-  constructor(public ui: UiService) {}
+  constructor(public ui: UiService, public authService: AuthService) {}
 
   closeSidebar(): void {
     if (this.ui.isSidebarOpen()) {

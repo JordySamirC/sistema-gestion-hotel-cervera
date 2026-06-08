@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, gerenteGuard } from './core/guards/auth.guard';
+import { authGuard, gerenteGuard, noLimpiezaGuard } from './core/guards/auth.guard';
 import { MainLayoutComponent } from './layouts/main-layout/main-layout.component';
 import { LoginComponent } from './pages/login/login.component';
 import { ResetPasswordComponent } from './pages/reset-password/reset-password.component';
@@ -29,14 +29,14 @@ export const routes: Routes = [
     component: MainLayoutComponent,
     canActivate: [authGuard],
     children: [
-      { path: 'panel', component: DashboardComponent },
-      { path: 'habitaciones', component: HabitacionListComponent },
-      { path: 'reservas', component: PanelReservasComponent },
-      { path: 'reservas/individual/nueva', component: ReservaFormComponent },
-      { path: 'reservas/grupo/nuevo', component: GrupoFormComponent },
-      { path: 'reservas/:id', component: ReservaDetailComponent },
-      { path: 'registrar-ingreso', component: CheckInComponent },
-      { path: 'registrar-salida', component: CheckOutComponent },
+      { path: 'panel', component: DashboardComponent, canActivate: [noLimpiezaGuard] },
+      { path: 'habitaciones', component: HabitacionListComponent, canActivate: [noLimpiezaGuard] },
+      { path: 'reservas', component: PanelReservasComponent, canActivate: [noLimpiezaGuard] },
+      { path: 'reservas/individual/nueva', component: ReservaFormComponent, canActivate: [noLimpiezaGuard] },
+      { path: 'reservas/grupo/nuevo', component: GrupoFormComponent, canActivate: [noLimpiezaGuard] },
+      { path: 'reservas/:id', component: ReservaDetailComponent, canActivate: [noLimpiezaGuard] },
+      { path: 'registrar-ingreso', component: CheckInComponent, canActivate: [noLimpiezaGuard] },
+      { path: 'registrar-salida', component: CheckOutComponent, canActivate: [noLimpiezaGuard] },
       { path: 'limpieza', component: LimpiezaListComponent },
       { path: 'clientes', component: ClienteListComponent, canActivate: [gerenteGuard] },
       { path: 'pagos', component: PagoListComponent, canActivate: [gerenteGuard] },
@@ -45,7 +45,7 @@ export const routes: Routes = [
       { path: 'restricciones-fecha', component: RestriccionesFechaListComponent, canActivate: [gerenteGuard] },
       { path: 'usuarios', component: UsuarioListComponent, canActivate: [gerenteGuard] },
       { path: 'reportes', component: ReportesComponent, canActivate: [gerenteGuard] },
-      { path: 'configuracion', component: ConfiguracionComponent },
+      { path: 'configuracion', component: ConfiguracionComponent, canActivate: [noLimpiezaGuard] },
       { path: '', redirectTo: '/panel', pathMatch: 'full' }
     ]
   },

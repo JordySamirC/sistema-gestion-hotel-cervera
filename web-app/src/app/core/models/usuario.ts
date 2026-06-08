@@ -12,6 +12,7 @@ export interface LoginResponse {
   nombres: string;
   apellidos: string;
   rol: string;
+  rolId: string;
 }
 
 export interface UsuarioResponse {
