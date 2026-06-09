@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://sistema-gestion-hotel-cervera.onrender.com/api'
+  apiUrl: 'https://hotel-cervera-api.onrender.com/api'
 };
