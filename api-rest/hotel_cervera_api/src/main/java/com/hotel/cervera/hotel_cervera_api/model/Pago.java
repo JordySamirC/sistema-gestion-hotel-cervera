@@ -106,7 +106,7 @@ public class Pago {
     @JsonIgnore
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
-        name = "pagos_estadia",
+        name = "pago_estadias",
         joinColumns = @JoinColumn(name = "pago_id"),
         inverseJoinColumns = @JoinColumn(name = "estadia_id")
     )
