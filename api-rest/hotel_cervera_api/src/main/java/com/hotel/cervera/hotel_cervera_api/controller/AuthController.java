@@ -67,10 +67,10 @@ public class AuthController {
         
         org.springframework.http.ResponseCookie cookie = org.springframework.http.ResponseCookie.from("auth_token", response.getToken())
                 .httpOnly(true)
-                .secure(false) // Temporarily false until TLS is implemented (F-001)
+                .secure(true) // Required for SameSite=None
                 .path("/")
                 .maxAge(24 * 60 * 60)
-                .sameSite("Strict")
+                .sameSite("None") // Required for cross-origin cookie sharing
                 .build();
                 
         // Return without token in body for security
@@ -86,10 +86,10 @@ public class AuthController {
     public ResponseEntity<Void> logout() {
         org.springframework.http.ResponseCookie cookie = org.springframework.http.ResponseCookie.from("auth_token", "")
                 .httpOnly(true)
-                .secure(false) // Temporarily false until TLS is implemented
+                .secure(true) // Required for SameSite=None
                 .path("/")
                 .maxAge(0)
-                .sameSite("Strict")
+                .sameSite("None")
                 .build();
                 
         return ResponseEntity.ok()
