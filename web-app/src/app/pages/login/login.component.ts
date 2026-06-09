@@ -38,7 +38,7 @@ import { CommonModule } from '@angular/common';
                 name="email"
                 placeholder="correo@hotelcervera.com"
                 required
-                pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}"
+                pattern="^[^\s@]+@[^\s@]+\.[^\s@]{2,}$"
                 autocomplete="email"
                 #emailField="ngModel"
               />
@@ -547,7 +547,7 @@ export class LoginComponent {
       return;
     }
 
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
     if (!emailRegex.test(this.email)) {
       this.error = 'Ingrese un email corporativo válido';
       return;
