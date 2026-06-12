@@ -174,32 +174,36 @@ const PAISES = [
           <button *ngIf="searchTerm" class="clear-btn" (click)="searchTerm = ''; filtrar()"><i class="bi bi-x-lg"></i></button>
         </div>
         
-        <div class="filters-row mt-3">
+        <div class="filters-grid mt-3">
           <div class="filter-group">
-            <select [(ngModel)]="filtroDocumento" (change)="filtrar()" class="form-control filter-select">
-              <option value="">Tipo Doc: Todos</option>
+            <label class="filter-label"><i class="bi bi-card-heading mr-1"></i> Documento</label>
+            <select [(ngModel)]="filtroDocumento" (change)="filtrar()" class="filter-select">
+              <option value="">Todos los tipos</option>
               <option value="DNI">DNI (Perú)</option>
               <option value="Pasaporte">Pasaporte</option>
               <option value="Carné Extranjería">Carné Extranjería</option>
             </select>
           </div>
           <div class="filter-group">
-            <select [(ngModel)]="filtroNacionalidad" (change)="filtrar()" class="form-control filter-select">
-              <option value="">Nacionalidad: Todas</option>
+            <label class="filter-label"><i class="bi bi-globe-americas mr-1"></i> Nacionalidad</label>
+            <select [(ngModel)]="filtroNacionalidad" (change)="filtrar()" class="filter-select">
+              <option value="">Todas</option>
               <option *ngFor="let p of paises" [value]="p">{{ p }}</option>
             </select>
           </div>
           <div class="filter-group">
-            <select [(ngModel)]="filtroGenero" (change)="filtrar()" class="form-control filter-select">
-              <option value="">Género: Todos</option>
+            <label class="filter-label"><i class="bi bi-gender-ambiguous mr-1"></i> Género</label>
+            <select [(ngModel)]="filtroGenero" (change)="filtrar()" class="filter-select">
+              <option value="">Todos</option>
               <option value="Masculino">Masculino</option>
               <option value="Femenino">Femenino</option>
               <option value="No especificar">No especificar</option>
             </select>
           </div>
           <div class="filter-group">
-            <select [(ngModel)]="filtroEstado" (change)="filtrar()" class="form-control filter-select">
-              <option value="">Estado: Todos</option>
+            <label class="filter-label"><i class="bi bi-info-circle mr-1"></i> Estado</label>
+            <select [(ngModel)]="filtroEstado" (change)="filtrar()" class="filter-select">
+              <option value="">Todos los estados</option>
               <option value="ACTIVO">Activo</option>
               <option value="SUSPENDIDO">Suspendido</option>
               <option value="VETADO">Vetado</option>
@@ -688,29 +692,42 @@ const PAISES = [
       padding: 4px;
     }
 
-    .filters-row {
+    .filters-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-      margin-top: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 18px;
+      align-items: flex-end;
     }
-    
-    @media (max-width: 768px) {
-      .filters-row {
-        grid-template-columns: repeat(2, 1fr);
-      }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
     }
-    
-    @media (max-width: 480px) {
-      .filters-row {
-        grid-template-columns: 1fr;
-      }
+
+    .filter-label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #2D5A27; /* Verde Selva */
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
     }
-    
+
     .filter-select {
-      background-color: white;
-      font-size: 0.85rem;
-      border-color: rgba(45, 90, 39, 0.2);
+      padding: 11px 14px;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      outline: none;
+      background: white;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    .filter-select:focus {
+      border-color: #2D5A27; /* Verde Selva */
+      box-shadow: 0 0 0 3px rgba(45, 90, 39, 0.1);
     }
 
     /* BOUTIQUE TABLE */
