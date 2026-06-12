@@ -71,11 +71,44 @@ import { RolResponse } from '../../../core/models/rol';
         </div>
       </div>
 
+      <!-- BÚSQUEDA Y FILTROS GLASSMORPHIC -->
+      <div class="search-card glass-panel" style="margin-bottom: 24px;">
+        <div class="search-box">
+          <span class="search-icon"><i class="bi bi-search"></i></span>
+          <input 
+            type="text" 
+            [(ngModel)]="queryBusqueda" 
+            (input)="filtrar()" 
+            placeholder="Buscar usuarios por usuario, nombres o correo electrónico..." 
+            class="search-input" 
+          />
+          <button *ngIf="queryBusqueda" class="clear-btn" (click)="queryBusqueda = ''; filtrar()"><i class="bi bi-x-lg"></i></button>
+        </div>
+        
+        <div class="filters-grid" style="margin-top: 16px;">
+          <div class="filter-group">
+            <label class="filter-label"><i class="bi bi-person-badge mr-1"></i> Rol Asignado</label>
+            <select [(ngModel)]="filtroRol" (change)="filtrar()" class="filter-select">
+              <option value="">Todos los roles</option>
+              <option *ngFor="let r of roles" [value]="r.nombre">{{ r.nombre }}</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label class="filter-label"><i class="bi bi-info-circle mr-1"></i> Estado del Acceso</label>
+            <select [(ngModel)]="filtroEstado" (change)="filtrar()" class="filter-select">
+              <option value="">Todos los estados</option>
+              <option value="ACTIVO">Activo</option>
+              <option value="SUSPENDIDO">Suspendido</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
       <!-- TABLA DE CONTROL -->
       <div class="table-card glass-panel">
         <div class="table-header-title">
           <h3><i class="bi bi-people-fill text-verde-selva mr-1"></i> Personal Registrado</h3>
-          <span class="results-badge">{{ usuarios.length }} usuarios en el sistema</span>
+          <span class="results-badge">{{ usuariosFiltrados.length }} usuarios encontrados</span>
         </div>
         <div class="table-responsive">
           <table class="table">
@@ -112,17 +145,17 @@ import { RolResponse } from '../../../core/models/rol';
                   </button>
                 </td>
               </tr>
-              <tr *ngIf="usuarios.length === 0">
-                <td colspan="7" class="empty"><i class="bi bi-info-circle-fill text-slate-400 mr-2"></i> No hay usuarios registrados en el sistema</td>
+              <tr *ngIf="usuariosFiltrados.length === 0">
+                <td colspan="7" class="empty"><i class="bi bi-info-circle-fill text-slate-400 mr-2"></i> No se encontraron usuarios que coincidan con la búsqueda</td>
               </tr>
             </tbody>
           </table>
         </div>
 
         <!-- PAGINACIÓN PREMIUM CON CONTROLES DE MARCA -->
-        <div class="paginator-container" *ngIf="usuarios.length > 0">
+        <div class="paginator-container" *ngIf="usuariosFiltrados.length > 0">
           <div class="paginator-info">
-            Mostrando <b>{{ getRangoInicio() }} - {{ getRangoFin() }}</b> de <b>{{ usuarios.length }}</b> registros
+            Mostrando <b>{{ getRangoInicio() }} - {{ getRangoFin() }}</b> de <b>{{ usuariosFiltrados.length }}</b> registros
           </div>
           <div class="paginator-controls">
             <div class="page-size-selector">
@@ -316,6 +349,92 @@ import { RolResponse } from '../../../core/models/rol';
     .btn-new:hover {
       background: linear-gradient(135deg, #2D5A27 0%, #1A211B 100%);
       transform: translateY(-1px);
+    }
+
+    /* SEARCH AND FILTERS */
+    .search-card {
+      border-radius: 16px;
+      padding: 24px;
+    }
+
+    .search-box {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 16px;
+      color: #64748b;
+      font-size: 1.05rem;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 12px 14px 12px 46px;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      font-size: 0.92rem;
+      font-family: inherit;
+      outline: none;
+      transition: all 0.25s ease;
+      background: rgba(248, 250, 252, 0.7);
+    }
+
+    .search-input:focus {
+      border-color: #2D5A27;
+      box-shadow: 0 0 0 3px rgba(45, 90, 39, 0.12);
+      background: white;
+    }
+
+    .clear-btn {
+      position: absolute;
+      right: 14px;
+      background: none;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 4px;
+    }
+
+    .filters-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 18px;
+      align-items: flex-end;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .filter-label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #2D5A27;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .filter-select {
+      padding: 11px 14px;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      outline: none;
+      background: white;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    .filter-select:focus {
+      border-color: #2D5A27;
+      box-shadow: 0 0 0 3px rgba(45, 90, 39, 0.1);
     }
 
     /* CARD GLASSMORPHIC */
@@ -830,9 +949,14 @@ import { RolResponse } from '../../../core/models/rol';
 })
 export class UsuarioListComponent implements OnInit {
   usuarios: UsuarioResponse[] = [];
+  usuariosFiltrados: UsuarioResponse[] = [];
   usuariosPaginados: UsuarioResponse[] = [];
   roles: RolResponse[] = [];
   showForm = false;
+
+  queryBusqueda = '';
+  filtroRol = '';
+  filtroEstado = '';
 
   newUser: UsuarioRequest = {
     nombreUsuario: '', correoElectronico: '', contrasena: '', nombres: '', apellidos: '', rolId: ''
@@ -864,9 +988,27 @@ export class UsuarioListComponent implements OnInit {
   cargarUsuarios(): void {
     this.service.getAll().subscribe({ next: (data) => {
       this.usuarios = data;
-      this.paginaActual = 1;
-      this.actualizarPaginacion();
+      this.filtrar();
     }});
+  }
+
+  filtrar(): void {
+    const term = this.queryBusqueda.toLowerCase().trim();
+    this.usuariosFiltrados = this.usuarios.filter(u => {
+      const matchSearch = !term ||
+        u.nombreUsuario.toLowerCase().includes(term) ||
+        u.nombres.toLowerCase().includes(term) ||
+        u.apellidos.toLowerCase().includes(term) ||
+        u.correoElectronico.toLowerCase().includes(term);
+
+      const matchRol = !this.filtroRol || u.rolNombre === this.filtroRol;
+      const estadoActual = (u.estado || 'ACTIVO').toUpperCase();
+      const matchEstado = !this.filtroEstado || estadoActual === this.filtroEstado;
+
+      return matchSearch && matchRol && matchEstado;
+    });
+    this.paginaActual = 1;
+    this.actualizarPaginacion();
   }
 
   getRoleClass(rolNombre: string): string {
@@ -930,7 +1072,7 @@ export class UsuarioListComponent implements OnInit {
 
   // MÉTODOS DE PAGINACIÓN
   actualizarPaginacion(): void {
-    this.totalPaginas = Math.ceil(this.usuarios.length / this.elementosPorPagina) || 1;
+    this.totalPaginas = Math.ceil(this.usuariosFiltrados.length / this.elementosPorPagina) || 1;
     if (this.paginaActual > this.totalPaginas) {
       this.paginaActual = this.totalPaginas;
     }
@@ -938,7 +1080,7 @@ export class UsuarioListComponent implements OnInit {
     const inicio = (this.paginaActual - 1) * this.elementosPorPagina;
     const fin = inicio + parseInt(this.elementosPorPagina.toString());
     
-    this.usuariosPaginados = this.usuarios.slice(inicio, fin);
+    this.usuariosPaginados = this.usuariosFiltrados.slice(inicio, fin);
   }
 
   cambiarPagina(pagina: number): void {
@@ -959,12 +1101,12 @@ export class UsuarioListComponent implements OnInit {
   }
 
   getRangoInicio(): number {
-    if (this.usuarios.length === 0) return 0;
+    if (this.usuariosFiltrados.length === 0) return 0;
     return (this.paginaActual - 1) * this.elementosPorPagina + 1;
   }
 
   getRangoFin(): number {
-    return Math.min(this.paginaActual * this.elementosPorPagina, this.usuarios.length);
+    return Math.min(this.paginaActual * this.elementosPorPagina, this.usuariosFiltrados.length);
   }
 
   getPaginasArray(): number[] {
