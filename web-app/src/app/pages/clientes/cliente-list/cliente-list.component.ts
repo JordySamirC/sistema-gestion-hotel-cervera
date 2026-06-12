@@ -33,8 +33,8 @@ const PAISES = [
           <h2><i class="header-icon-premium bi bi-person-badge-fill"></i> Directorio de Clientes</h2>
           <p class="subtitle">Gestione la base de datos de huéspedes titulares y acompañantes del hotel</p>
         </div>
-        <button class="btn-new-cliente" (click)="toggleForm()">
-          <i class="bi" [ngClass]="showForm ? 'bi-x-circle-fill' : 'bi-person-plus-fill'"></i> {{ showForm ? (editandoId ? 'Cancelar Edición' : 'Cancelar Registro') : 'Nuevo Cliente' }}
+        <button class="btn-new-cliente" (click)="toggleForm()" *ngIf="!showForm">
+          <i class="bi bi-person-plus-fill"></i> Nuevo Cliente
         </button>
       </div>
 
