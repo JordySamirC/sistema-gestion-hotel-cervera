@@ -173,6 +173,39 @@ const PAISES = [
           />
           <button *ngIf="searchTerm" class="clear-btn" (click)="searchTerm = ''; filtrar()"><i class="bi bi-x-lg"></i></button>
         </div>
+        
+        <div class="filters-row mt-3">
+          <div class="filter-group">
+            <select [(ngModel)]="filtroDocumento" (change)="filtrar()" class="form-control filter-select">
+              <option value="">Tipo Doc: Todos</option>
+              <option value="DNI">DNI (Perú)</option>
+              <option value="Pasaporte">Pasaporte</option>
+              <option value="Carné Extranjería">Carné Extranjería</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <select [(ngModel)]="filtroNacionalidad" (change)="filtrar()" class="form-control filter-select">
+              <option value="">Nacionalidad: Todas</option>
+              <option *ngFor="let p of paises" [value]="p">{{ p }}</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <select [(ngModel)]="filtroGenero" (change)="filtrar()" class="form-control filter-select">
+              <option value="">Género: Todos</option>
+              <option value="Masculino">Masculino</option>
+              <option value="Femenino">Femenino</option>
+              <option value="No especificar">No especificar</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <select [(ngModel)]="filtroEstado" (change)="filtrar()" class="form-control filter-select">
+              <option value="">Estado: Todos</option>
+              <option value="ACTIVO">Activo</option>
+              <option value="SUSPENDIDO">Suspendido</option>
+              <option value="VETADO">Vetado</option>
+            </select>
+          </div>
+        </div>
       </div>
 
       <!-- DIRECTORIÓ DE CLIENTES (TABLA BOUTIQUE) -->
@@ -655,6 +688,31 @@ const PAISES = [
       padding: 4px;
     }
 
+    .filters-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 16px;
+    }
+    
+    @media (max-width: 768px) {
+      .filters-row {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .filters-row {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .filter-select {
+      background-color: white;
+      font-size: 0.85rem;
+      border-color: rgba(45, 90, 39, 0.2);
+    }
+
     /* BOUTIQUE TABLE */
     .table-card {
       border-radius: 16px;
@@ -928,6 +986,10 @@ export class ClienteListComponent implements OnInit {
   showForm = false;
   editandoId: string | null = null;
   searchTerm = '';
+  filtroDocumento = '';
+  filtroNacionalidad = '';
+  filtroGenero = '';
+  filtroEstado = '';
   clienteForm: FormGroup;
   paises = PAISES;
   paginaActual = 1;
@@ -1090,13 +1152,20 @@ export class ClienteListComponent implements OnInit {
 
   filtrar(): void {
     const term = this.searchTerm.toLowerCase().trim();
-    this.clientesFiltrados = this.clientes.filter(c =>
-      !term ||
-      c.nombres.toLowerCase().includes(term) ||
-      c.apellidos.toLowerCase().includes(term) ||
-      c.numeroDocumento.includes(term) ||
-      c.nacionalidad.toLowerCase().includes(term)
-    );
+    this.clientesFiltrados = this.clientes.filter(c => {
+      const matchSearch = !term ||
+        c.nombres.toLowerCase().includes(term) ||
+        c.apellidos.toLowerCase().includes(term) ||
+        c.numeroDocumento.includes(term) ||
+        c.nacionalidad.toLowerCase().includes(term);
+
+      const matchDoc = !this.filtroDocumento || c.tipoDocumento === this.filtroDocumento;
+      const matchNac = !this.filtroNacionalidad || c.nacionalidad === this.filtroNacionalidad;
+      const matchGen = !this.filtroGenero || c.genero === this.filtroGenero;
+      const matchEst = !this.filtroEstado || c.estado === this.filtroEstado;
+
+      return matchSearch && matchDoc && matchNac && matchGen && matchEst;
+    });
     this.paginaActual = 1;
     this.actualizarPaginacion();
   }
