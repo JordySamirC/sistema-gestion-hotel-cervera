@@ -271,13 +271,13 @@ interface VisualGroup {
                 <label class="checkbox-label">
                   <input type="checkbox" [(ngModel)]="verificadoTitular" />
                   <span class="custom-checkbox"></span>
-                  <span class="label-text">He verificado físicamente el documento de identidad de los Titulares.</span>
+                  <span class="label-text">He verificado físicamente el documento de identidad {{ modoModal === 'individual' ? 'del Titular' : 'de los Titulares' }}.</span>
                 </label>
                 
-                <label class="checkbox-label">
+                <label class="checkbox-label" *ngIf="getTotalAcompanantes() > 0">
                   <input type="checkbox" [(ngModel)]="verificadoAcompanantes" />
                   <span class="custom-checkbox"></span>
-                  <span class="label-text">He verificado los documentos de los Acompañantes (si aplica).</span>
+                  <span class="label-text">He verificado {{ getTotalAcompanantes() === 1 ? 'el documento del Acompañante.' : 'los documentos de los Acompañantes.' }}</span>
                 </label>
               </div>
             </div>
@@ -293,7 +293,7 @@ interface VisualGroup {
             <button class="btn-cancel" (click)="cerrarModal()">Cancelar</button>
             <button 
               class="btn-confirm" 
-              [disabled]="!verificadoTitular || !verificadoAcompanantes || guardando"
+              [disabled]="!verificadoTitular || (getTotalAcompanantes() > 0 && !verificadoAcompanantes) || guardando"
               (click)="confirmarIngreso()">
               <i class="bi bi-check-circle-fill mr-1" *ngIf="!guardando"></i> {{ guardando ? 'Registrando...' : 'Confirmar Ingreso' }}
             </button>
@@ -1235,6 +1235,16 @@ export class CheckInComponent implements OnInit {
     return list.map(ac => ac.clienteNombre).join(', ');
   }
 
+  getTotalAcompanantes(): number {
+    if (this.modoModal === 'individual' && this.reservaSeleccionada) {
+      return this.getAcompanantes(this.reservaSeleccionada).length;
+    }
+    if (this.modoModal === 'grupo' && this.grupoSeleccionado) {
+      return this.grupoSeleccionado.reservas.reduce((sum, r) => sum + this.getAcompanantes(r).length, 0);
+    }
+    return 0;
+  }
+
   // MODAL OPERATORS
   abrirCheckInIndividual(reserva: ReservaResponse): void {
     this.modoModal = 'individual';
@@ -1263,7 +1273,7 @@ export class CheckInComponent implements OnInit {
   }
 
   confirmarIngreso(): void {
-    if (!this.verificadoTitular || !this.verificadoAcompanantes) return;
+    if (!this.verificadoTitular || (this.getTotalAcompanantes() > 0 && !this.verificadoAcompanantes)) return;
     this.guardando = true;
 
     if (this.modoModal === 'individual' && this.reservaSeleccionada) {
