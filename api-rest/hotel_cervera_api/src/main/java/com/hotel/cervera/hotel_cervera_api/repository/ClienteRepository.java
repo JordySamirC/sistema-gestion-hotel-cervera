@@ -18,6 +18,7 @@ public interface ClienteRepository extends JpaRepository<Cliente, UUID> {
     boolean existsByTipoDocumentoAndNumeroDocumento(String tipoDocumento, String numeroDocumento);
 
     @Query("SELECT c FROM Cliente c WHERE " +
+           "LOWER(CONCAT(c.nombres, ' ', c.apellidos)) LIKE LOWER(CONCAT('%', :termino, '%')) OR " +
            "LOWER(c.nombres) LIKE LOWER(CONCAT('%', :termino, '%')) OR " +
            "LOWER(c.apellidos) LIKE LOWER(CONCAT('%', :termino, '%')) OR " +
            "c.numeroDocumento LIKE CONCAT('%', :termino, '%') OR " +
