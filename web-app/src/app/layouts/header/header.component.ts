@@ -31,7 +31,7 @@ import { CommonModule } from '@angular/common';
           </div>
         </div>
 
-        <a routerLink="/configuracion" class="btn-config" title="Configuración">
+        <a *ngIf="!esLimpieza" routerLink="/configuracion" class="btn-config" title="Configuración">
           <i class="bi bi-gear-fill"></i>
         </a>
 
@@ -237,6 +237,7 @@ import { CommonModule } from '@angular/common';
 })
 export class HeaderComponent {
   get usuario() { return this.auth.getUsuario(); }
+  get esLimpieza() { return this.auth.esLimpieza(); }
 
   constructor(
     private auth: AuthService, 
